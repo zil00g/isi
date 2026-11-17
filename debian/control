@@ -1,0 +1,27 @@
+Source: isi
+Section: editors
+Priority: optional
+Maintainer: zil00g <zil00g@protonmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://github.com/zil00g/isi
+Vcs-Browser: https://github.com/zil00g/isi
+Vcs-Git: https://github.com/zil00g/isi.git
+Rules-Requires-Root: no
+
+Package: isi
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: wl-clipboard | xclip | xsel
+Description: terminal text editor with menus, tables and encryption
+ isi is a text editor for the terminal with drop-down menus that work
+ with the mouse or the Tab key, line numbers, tables that realign
+ themselves while you type, CSV import and
+ file encryption with XChaCha20-Poly1305 and Argon2id.
+ .
+ It can highlight indicators of compromise (domains, IP addresses,
+ URLs, executables and hashes) and defang or refang them, which is
+ useful when handling malware reports.
+ .
+ The interface is available in 23 languages and follows the system
+ language, with Spanish as the default.

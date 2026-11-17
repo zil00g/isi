@@ -1,0 +1,18 @@
+Package: isi
+Version: @VERSION@
+Architecture: @ARCH@
+Maintainer: zil00g <zil00g@protonmail.com>
+Installed-Size: @TAM@
+Section: editors
+Priority: optional
+Suggests: wl-clipboard | xclip | xsel
+Homepage: https://github.com/zil00g/isi
+Description: editor de texto para la terminal, ligero y en 23 idiomas
+ isi es un editor de texto para la terminal con menús desplegables
+ que se usan con el ratón o con el tabulador, números de línea,
+ tablas que se ajustan solas mientras escribes,
+ importación de CSV y cifrado de ficheros con XChaCha20-Poly1305 y
+ Argon2id.
+ .
+ Resalta y desactiva IOCs (dominios, IPs, URLs, ejecutables y hashes),
+ está en 23 idiomas y es un único binario estático sin dependencias.

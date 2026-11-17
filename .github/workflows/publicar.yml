@@ -1,0 +1,72 @@
+name: publicar
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        include:
+          - plataforma: linux/amd64
+            arch: amd64
+            estatico: -static-pie
+          - plataforma: linux/386
+            arch: i386
+            estatico: -static-pie
+          - plataforma: linux/arm64
+            arch: arm64
+            estatico: -static-pie
+          - plataforma: linux/arm/v7
+            arch: armhf
+            estatico: -static
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - name: Compilar y empaquetar
+        run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          docker run --rm --platform ${{ matrix.plataforma }} -e SOURCE_DATE_EPOCH -v "$PWD":/src -w /src \
+            alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc \
+            sh paquete/compilar.sh ${{ matrix.arch }} ${{ matrix.estatico }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: isi-${{ matrix.arch }}
+          path: dist/*
+
+  publicar:
+    needs: compilar
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Sumas SHA-256
+        run: cd dist && sha256sum * > SHA256SUMS
+      - name: Crear la versión
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Paquetes para Debian, Ubuntu y Raspberry Pi OS, y binarios estáticos para cualquier Linux."
+            echo
+            echo "## Sumas SHA-256"
+            echo
+            echo "Para comprobar que lo descargado no se ha estropeado ni lo ha tocado nadie:"
+            echo
+            echo '```'
+            cat dist/SHA256SUMS
+            echo '```'
+            echo
+            echo 'Descarga también `SHA256SUMS` y, en la misma carpeta, ejecuta `sha256sum -c SHA256SUMS --ignore-missing`. Tiene que decir "La suma coincide" (o "OK") en cada fichero.'
+          } > notas.md
+          gh release create "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" --title "isi ${GITHUB_REF_NAME#v}" --notes-file notas.md
