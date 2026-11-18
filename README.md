@@ -1,6 +1,6 @@
 # isi
 
-Editor de texto para la terminal: rápido, con buena pinta y en 23
+Editor de texto para la terminal: rápido, sencillo y en 23
 idiomas.
 
 ![Los atajos de teclado de isi](capturas/01-atajos.png)
