@@ -4344,11 +4344,35 @@ static int simbolo(const char *p, int pct)
 	return strncmp(p, "£", 2) ? 0 : 2;
 }
 
+static int grupos(const char *a, const char *p, char sd)
+{
+	int g = 0, mil = 0, dec = 0;
+
+	if (!isdigit((unsigned char)p[-1]))
+		return 0;
+	for (; a < p; a++) {
+		if (isdigit((unsigned char)*a)) {
+			g++;
+			continue;
+		}
+		if (!g || dec || (mil && g != 3))
+			return 0;
+		if (*a == sd)
+			dec = 1;
+		else if (g > 3)
+			return 0;
+		else
+			mil = 1;
+		g = 0;
+	}
+	return dec || !mil || g == 3;
+}
+
 static int numero(const char *s, double *v)
 {
 	const char *p, *a, *ud = 0, *uc = 0, *q;
 	double r = 0, d = 1;
-	int neg = 0, dig = 0, coma = idiomas[idi].coma, k;
+	int neg = 0, dig = 0, sep = 0, coma = idiomas[idi].coma, k;
 	char sd;
 
 	for (p = s; (k = simbolo(p, 0)); p += k)
@@ -4368,15 +4392,20 @@ static int numero(const char *s, double *v)
 		;
 	if (*q)
 		return 0;
+	sep = p - a - dig;
 	if (ud && uc)
 		sd = ud > uc ? '.' : ',';
+	else if (sep > 1)
+		sd = 0;
 	else if (ud || uc) {
 		q = ud ? ud : uc;
 		for (k = 0; isdigit((unsigned char)q[k + 1]); k++)
 			;
-		sd = *q == (coma ? ',' : '.') || k != 3 || q + k + 1 != p ? *q : 0;
+		sd = *q == (coma ? ',' : '.') || k != 3 || q - a > 3 ? *q : 0;
 	} else
 		sd = 0;
+	if (!grupos(a, p, sd))
+		return 0;
 	for (q = a; q < p; q++) {
 		if (*q == sd) {
 			d = 0.1;

@@ -178,7 +178,7 @@ static void tipo(const char *s, int t, double v)
 	char q[128];
 
 	snprintf(q, sizeof q, "tipo de «%s»", s);
-	ok(tipode(s, &x) == t && (t > 2 || x == v), q);
+	ok(tipode(s, &x) == t && (t > 2 || (x - v < 1e-6 && v - x < 1e-6)), q);
 }
 
 static void filtro(const char *e, const char *s, int r)
@@ -208,6 +208,32 @@ static void pruebas_hoja(void)
 	tipo("-7", 1, -7);
 	tipo("texto", 3, 0);
 	tipo("", 4, 0);
+	tipo("1.234.567", 1, 1234567);
+	tipo("1.234.567,89", 1, 1234567.89);
+	tipo("1,234,567.89", 1, 1234567.89);
+	tipo("999.999.999.999", 1, 999999999999.0);
+	tipo("1.234", 1, 1234);
+	tipo("1234.567", 1, 1234.567);
+	tipo("1.204,75 €", 1, 1204.75);
+	tipo("0.5", 1, 0.5);
+	tipo("256.1.1.1", 3, 0);
+	tipo("300.1.1.1", 3, 0);
+	tipo("1.2.3", 3, 0);
+	tipo("10.0.0", 3, 0);
+	tipo("12.34.56", 3, 0);
+	tipo("1,2,3", 3, 0);
+	tipo("1.23.456", 3, 0);
+	tipo("1.234.56", 3, 0);
+	tipo("1..2", 3, 0);
+	tipo("1,5.3", 3, 0);
+	tipo(".5", 3, 0);
+	tipo("5.", 3, 0);
+	idi = 1;
+	tipo("1.5", 1, 1.5);
+	tipo("1,234", 1, 1234);
+	tipo("1,234,567.89", 1, 1234567.89);
+	tipo("1.2.3", 3, 0);
+	idi = 0;
 
 	for (i = 0; i < 9; i++) {
 		k[i].r = i;
