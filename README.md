@@ -30,18 +30,18 @@ Descarga el `.deb` de tu equipo desde la página de
 
 | Paquete | Para |
 |---|---|
-| `isi_1.0.0_amd64.deb` | PC y portátiles de 64 bits |
-| `isi_1.0.0_i386.deb` | PC antiguos de 32 bits |
-| `isi_1.0.0_arm64.deb` | Raspberry Pi 3, 4 y 5 con sistema de 64 bits |
-| `isi_1.0.0_armhf.deb` | Raspberry Pi con Raspberry Pi OS de 32 bits |
+| `isi_1.0.1_amd64.deb` | PC y portátiles de 64 bits |
+| `isi_1.0.1_i386.deb` | PC antiguos de 32 bits |
+| `isi_1.0.1_arm64.deb` | Raspberry Pi 3, 4 y 5 con sistema de 64 bits |
+| `isi_1.0.1_armhf.deb` | Raspberry Pi con Raspberry Pi OS de 32 bits |
 
 y, en la carpeta donde lo hayas descargado:
 
 ```sh
-sudo apt install ./isi_1.0.0_amd64.deb
+sudo apt install ./isi_1.0.1_amd64.deb
 ```
 
-También vale `sudo dpkg -i isi_1.0.0_amd64.deb`.
+También vale `sudo dpkg -i isi_1.0.1_amd64.deb`.
 
 En la página de cada versión están las sumas SHA-256 de todos los
 ficheros. Para comprobar que el que has bajado está bien, descarga
@@ -63,8 +63,12 @@ Hace falta un compilador de C y `make`:
 
 ```sh
 make
+make check
 sudo make install
 ```
+
+`make check` comprueba los IOCs, el CSV, los filtros y el cifrado, y que
+los ficheros cifrados con versiones anteriores se siguen abriendo.
 
 `make estatico` lo compila estático y `make deb` genera el paquete en
 `dist/`. Con musl (`CC=musl-gcc`) sale bastante más pequeño que con glibc.
@@ -73,17 +77,6 @@ El binario se compila con protector de pila, `_FORTIFY_SOURCE`, PIE y
 RELRO completo. Al instalar el paquete, isi queda disponible como
 alternativa de `editor` (con prioridad baja, así que no cambia el que ya
 tengas): `sudo update-alternatives --config editor` para elegirlo.
-
-### Paquete de Debian
-
-En `debian/` está el empaquetado fuente estándar (debhelper 13,
-`3.0 (quilt)`). Para generar el paquete fuente y el `.deb` desde el
-código:
-
-```sh
-git archive --prefix=isi-1.0.0/ -o ../isi_1.0.0.orig.tar.gz HEAD -- . ':!debian'
-dpkg-buildpackage -us -uc
-```
 
 ## Uso
 

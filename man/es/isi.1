@@ -1,0 +1,220 @@
+.TH ISI 1 "noviembre de 2026" "isi 1.0.1" "Manual de isi"
+.SH NOMBRE
+isi \- editor de texto para la terminal
+.SH SINOPSIS
+.B isi
+.RB [ \-r ]
+.RI [ fichero ]
+.SH DESCRIPCIÓN
+.B isi
+es un editor de texto para la terminal. Ocupa toda la ventana dentro de
+un marco, con los menús arriba y el texto debajo. Los menús se abren con
+el ratón, con
+.B F10
+o con
+.B Alt
+y la inicial del menú, y se recorren con el tabulador o las flechas.
+.PP
+Si el fichero no existe, se crea al guardar. Si está cifrado con
+.BR isi ,
+se pide la contraseña al abrirlo.
+.SH OPCIONES
+.TP
+.B \-r
+Abre el fichero en modo solo lectura.
+.TP
+.B \-h
+Muestra la ayuda y termina.
+.TP
+.B \-v
+Muestra la versión y termina.
+.SH TECLAS
+.TP
+.B Ctrl+A, Ctrl+G, Ctrl+T, Ctrl+Q
+Abrir, guardar, guardar como y salir.
+.TP
+.B Ctrl+Z, Ctrl+Y
+Deshacer y rehacer.
+.TP
+.B Ctrl+X, Ctrl+C, Ctrl+V
+Cortar, copiar y pegar. Al copiar, el texto se manda también a la
+terminal (OSC 52) y, si existen,
+.BR wl\-copy ,
+.B xclip
+o
+.BR xsel .
+.TP
+.B Ctrl+Mayús+V
+Pegar lo copiado fuera de isi (una web, un documento). Es el pegado de
+la terminal y no necesita nada instalado.
+.TP
+.B Ctrl+E
+Seleccionar todo.
+.TP
+.B Ctrl+D, Ctrl+B
+Duplicar y borrar la línea.
+.TP
+.B Ctrl+K
+Eliminar las líneas vacías de la selección o, si no hay selección, de
+todo el texto.
+.TP
+.B Ctrl+F, F3, Mayús+F3
+Buscar, siguiente y anterior. No distingue mayúsculas de minúsculas.
+.TP
+.B Ctrl+R
+Buscar y reemplazar.
+.TP
+.B Ctrl+L
+Ir a una línea.
+.TP
+.B Ctrl+N
+Mostrar u ocultar los números de línea.
+.TP
+.B Ctrl+W
+Desactivar los IOC del texto o de la selección.
+.TP
+.B Inicio, Fin
+Principio y final del texto. Con
+.B Alt
+delante, principio y final de la línea.
+.TP
+.B Mayús+flechas
+Seleccionar. También se puede seleccionar arrastrando con el ratón, y
+con doble clic se selecciona una palabra.
+.TP
+.B Ctrl+H, F1
+Lista de atajos.
+.SH TABLAS
+El menú
+.B Tabla
+inserta tablas en formato Markdown o en cuadro, con el número de
+columnas y filas que se elija. Dentro de una tabla,
+.B Tab
+y
+.B Mayús+Tab
+pasan de una celda a otra y
+.B Enter
+baja a la primera celda de la fila siguiente, creándola si es la última. Las columnas se
+ensanchan solas al escribir.
+.SH CSV
+Los ficheros
+.B .csv
+y
+.B .tsv
+se abren como una hoja: columnas alineadas, fila de títulos fija y
+edición celda a celda.
+.B Archivo \(-> Abrir CSV
+abre así cualquier otro fichero. Al guardar solo cambian las celdas
+editadas; el separador, las comillas y los saltos de línea se conservan.
+.TP
+.B Tab, Mayús+Tab, Enter
+Celda siguiente, anterior y fila de abajo. En la última fila crean una
+nueva.
+.TP
+.B Ctrl+D, Ctrl+B
+Duplicar y borrar la fila.
+.TP
+.B Alt+\(da
+Menú de la columna: ordenar de A a Z o de Z a A y filtrar. También con
+un clic en la flecha del título.
+.PP
+Al ordenar se reconocen números, direcciones IP y fechas (ISO 8601 y
+dd/mm/aaaa); el texto se ordena sin distinguir mayúsculas ni tildes y
+las celdas vacías van al final.
+.PP
+El filtro muestra los valores de la columna con las veces que aparece
+cada uno, ordenables por frecuencia, y acepta expresiones:
+.I texto
+(contiene),
+.B * ?
+(comodines),
+.B 192.168.1.0/24
+(red),
+.BR > ,
+.BR >= ,
+.BR < ,
+.BR <= ,
+.B =
+(comparación),
+.B a..b
+(rango),
+.B !
+(negación) y
+.B |
+(o). Se pueden filtrar varias columnas a la vez.
+.PP
+.B Archivo \(-> Convertir CSV en tabla
+crea una tabla Markdown o en cuadro con las filas visibles. Sin un CSV
+abierto pide el fichero, detecta el separador y convierte a UTF\-8 los
+ficheros en Latin\-1.
+.SH IOC
+El menú
+.B IOCs
+resalta dominios, direcciones IP, URL, nombres de ejecutables y hashes
+MD5, SHA\-1 y SHA\-256, también dentro de código.
+.B Desactivar IOCs
+(Ctrl+W) los convierte en una forma que no se puede pulsar ni abrir por
+error, como
+.BR evil[.]com ,
+.B 1[.]2[.]3[.]4
+o
+.BR hxxp:// ,
+y
+.B Reactivar IOCs
+hace lo contrario. Con
+.B Desactivar al escribir
+se desactivan en el momento de escribirlos o pegarlos.
+.B Copiar lista de IOCs
+copia al portapapeles todos los indicadores sin repetir.
+.SH CIFRADO
+.B Archivo \(-> Cifrar
+pide una contraseña de al menos 15 caracteres con letras, números y
+símbolos. A partir de ese momento el fichero se guarda cifrado con
+XChaCha20\-Poly1305. La clave se obtiene de la contraseña con Argon2id
+(64 MiB de memoria, 3 pasadas). Si se pierde la contraseña no hay forma
+de recuperar el contenido.
+.PP
+.B Archivo \(-> Quitar cifrado
+vuelve a guardarlo en claro.
+.SH IDIOMA
+La interfaz está en 23 idiomas. La primera vez se usa el idioma del
+sistema (variables
+.BR LANGUAGE ,
+.BR LC_ALL ,
+.B LC_MESSAGES
+y
+.BR LANG )
+si está disponible, y si no, español.
+.B Ver \(-> Idioma
+permite cambiarlo.
+.SH FICHEROS
+.TP
+.I ~/.config/isi/config
+Idioma y preferencias (números de línea y opciones de IOC). Si existe
+.BR XDG_CONFIG_HOME ,
+se usa esa carpeta.
+.TP
+.IB fichero ~
+Copia de rescate que se escribe si la terminal se cierra o el programa
+recibe SIGHUP o SIGTERM con cambios sin guardar. Si el fichero estaba
+cifrado, la copia también lo está.
+.SH LÍMITES
+No abre ficheros de más de 1 GB.
+.SH AVISOS
+Los mensajes aparecen en una fila en la parte de abajo, que se cierra
+sola al cabo de un minuto, con doble clic o con
+.BR Esc .
+.SH SEGURIDAD
+Los caracteres de control y las secuencias de escape del fichero se
+muestran como
+.B ^X
+y nunca se envían a la terminal. Los caracteres invisibles o de
+dirección del texto se muestran como
+.BR ? .
+El guardado escribe primero en un fichero temporal y después lo
+renombra, así que un corte a mitad no deja el fichero a medias.
+.SH AUTOR
+zil00g <zil00g@protonmail.com>
+.SH LICENCIA
+GNU GPL versión 3 o posterior. El cifrado usa Monocypher, con licencia
+BSD de dos cláusulas o CC0.

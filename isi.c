@@ -31,7 +31,7 @@
 #include "monocypher/monocypher.h"
 #include "idiomas.h"
 
-#define VERSION "1.0.0"
+#define VERSION "1.0.1"
 #define TABU 4
 #define MAXC 256
 #define GRANDE 400

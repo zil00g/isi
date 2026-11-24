@@ -1,220 +1,220 @@
-.TH ISI 1 "noviembre de 2026" "isi 1.0.0" "Manual de isi"
-.SH NOMBRE
-isi \- editor de texto para la terminal
-.SH SINOPSIS
+.TH ISI 1 "November 2026" "isi 1.0.1" "isi manual"
+.SH NAME
+isi \- text editor for the terminal
+.SH SYNOPSIS
 .B isi
 .RB [ \-r ]
-.RI [ fichero ]
-.SH DESCRIPCIÓN
+.RI [ file ]
+.SH DESCRIPTION
 .B isi
-es un editor de texto para la terminal. Ocupa toda la ventana dentro de
-un marco, con los menús arriba y el texto debajo. Los menús se abren con
-el ratón, con
+is a text editor for the terminal. It fills the whole window inside a
+frame, with the menus at the top and the text below. Menus open with the
+mouse, with
 .B F10
-o con
+or with
 .B Alt
-y la inicial del menú, y se recorren con el tabulador o las flechas.
+and the first letter of the menu, and are browsed with Tab or the arrow
+keys.
 .PP
-Si el fichero no existe, se crea al guardar. Si está cifrado con
+If the file does not exist, it is created when saved. If it was
+encrypted with
 .BR isi ,
-se pide la contraseña al abrirlo.
-.SH OPCIONES
+the password is asked for when it is opened.
+.SH OPTIONS
 .TP
 .B \-r
-Abre el fichero en modo solo lectura.
+Open the file read\-only.
 .TP
-.B \-h
-Muestra la ayuda y termina.
+.BR \-h ", " \-\-help
+Show the help and exit.
 .TP
-.B \-v
-Muestra la versión y termina.
-.SH TECLAS
+.BR \-v ", " \-\-version
+Show the version and exit.
+.SH KEYS
 .TP
 .B Ctrl+A, Ctrl+G, Ctrl+T, Ctrl+Q
-Abrir, guardar, guardar como y salir.
+Open, save, save as and quit.
 .TP
 .B Ctrl+Z, Ctrl+Y
-Deshacer y rehacer.
+Undo and redo.
 .TP
 .B Ctrl+X, Ctrl+C, Ctrl+V
-Cortar, copiar y pegar. Al copiar, el texto se manda también a la
-terminal (OSC 52) y, si existen,
+Cut, copy and paste. Copied text is also sent to the terminal
+(OSC 52) and, if they exist, to
 .BR wl\-copy ,
 .B xclip
-o
+or
 .BR xsel .
 .TP
-.B Ctrl+Mayús+V
-Pegar lo copiado fuera de isi (una web, un documento). Es el pegado de
-la terminal y no necesita nada instalado.
+.B Ctrl+Shift+V
+Paste what was copied outside isi (a web page, a document). This is the
+terminal's own paste and needs nothing installed.
 .TP
 .B Ctrl+E
-Seleccionar todo.
+Select all.
 .TP
 .B Ctrl+D, Ctrl+B
-Duplicar y borrar la línea.
+Duplicate and delete the line.
 .TP
 .B Ctrl+K
-Eliminar las líneas vacías de la selección o, si no hay selección, de
-todo el texto.
+Remove the empty lines of the selection or, with no selection, of the
+whole text.
 .TP
-.B Ctrl+F, F3, Mayús+F3
-Buscar, siguiente y anterior. No distingue mayúsculas de minúsculas.
+.B Ctrl+F, F3, Shift+F3
+Search, next and previous. The search is not case sensitive.
 .TP
 .B Ctrl+R
-Buscar y reemplazar.
+Search and replace.
 .TP
 .B Ctrl+L
-Ir a una línea.
+Go to a line.
 .TP
 .B Ctrl+N
-Mostrar u ocultar los números de línea.
+Show or hide line numbers.
 .TP
 .B Ctrl+W
-Desactivar los IOC del texto o de la selección.
+Defang the IOCs of the text or of the selection.
 .TP
-.B Inicio, Fin
-Principio y final del texto. Con
+.B Home, End
+Start and end of the text. With
 .B Alt
-delante, principio y final de la línea.
+held, start and end of the line.
 .TP
-.B Mayús+flechas
-Seleccionar. También se puede seleccionar arrastrando con el ratón, y
-con doble clic se selecciona una palabra.
+.B Shift+arrows
+Select. Text can also be selected by dragging with the mouse, and a
+double click selects a word.
 .TP
 .B Ctrl+H, F1
-Lista de atajos.
-.SH TABLAS
-El menú
-.B Tabla
-inserta tablas en formato Markdown o en cuadro, con el número de
-columnas y filas que se elija. Dentro de una tabla,
+List of shortcuts.
+.SH TABLES
+The
+.B Table
+menu inserts tables in Markdown or box style, with the chosen number of
+columns and rows. Inside a table,
 .B Tab
-y
-.B Mayús+Tab
-pasan de una celda a otra y
+and
+.B Shift+Tab
+move from cell to cell and
 .B Enter
-baja a la primera celda de la fila siguiente, creándola si es la última. Las columnas se
-ensanchan solas al escribir.
+goes down to the first cell of the next row, creating it if it is the
+last one. Columns widen by themselves while typing.
 .SH CSV
-Los ficheros
 .B .csv
-y
+and
 .B .tsv
-se abren como una hoja: columnas alineadas, fila de títulos fija y
-edición celda a celda.
-.B Archivo \(-> Abrir CSV
-abre así cualquier otro fichero. Al guardar solo cambian las celdas
-editadas; el separador, las comillas y los saltos de línea se conservan.
+files open as a sheet: aligned columns, fixed header row and cell by
+cell editing.
+.B File \(-> Open CSV
+opens any other file this way. On saving, only the edited cells change;
+the separator, the quotes and the line breaks are kept.
 .TP
-.B Tab, Mayús+Tab, Enter
-Celda siguiente, anterior y fila de abajo. En la última fila crean una
-nueva.
+.B Tab, Shift+Tab, Enter
+Next cell, previous cell and row below. On the last row they create a
+new one.
 .TP
 .B Ctrl+D, Ctrl+B
-Duplicar y borrar la fila.
+Duplicate and delete the row.
 .TP
 .B Alt+\(da
-Menú de la columna: ordenar de A a Z o de Z a A y filtrar. También con
-un clic en la flecha del título.
+Column menu: sort from A to Z or from Z to A and filter. Also with a
+click on the arrow of the header.
 .PP
-Al ordenar se reconocen números, direcciones IP y fechas (ISO 8601 y
-dd/mm/aaaa); el texto se ordena sin distinguir mayúsculas ni tildes y
-las celdas vacías van al final.
+Sorting recognises numbers, IP addresses and dates (ISO 8601 and
+dd/mm/yyyy); text is sorted ignoring case and accents, and empty cells
+go last.
 .PP
-El filtro muestra los valores de la columna con las veces que aparece
-cada uno, ordenables por frecuencia, y acepta expresiones:
-.I texto
-(contiene),
+The filter shows the values of the column with how many times each one
+appears, sortable by frequency, and accepts expressions:
+.I text
+(contains),
 .B * ?
-(comodines),
+(wildcards),
 .B 192.168.1.0/24
-(red),
+(network),
 .BR > ,
 .BR >= ,
 .BR < ,
 .BR <= ,
 .B =
-(comparación),
+(comparison),
 .B a..b
-(rango),
+(range),
 .B !
-(negación) y
+(negation) and
 .B |
-(o). Se pueden filtrar varias columnas a la vez.
+(or). Several columns can be filtered at once.
 .PP
-.B Archivo \(-> Convertir CSV en tabla
-crea una tabla Markdown o en cuadro con las filas visibles. Sin un CSV
-abierto pide el fichero, detecta el separador y convierte a UTF\-8 los
-ficheros en Latin\-1.
+.B File \(-> Convert CSV to table
+creates a Markdown or box table with the visible rows. With no CSV open
+it asks for the file, detects the separator and converts Latin\-1 files
+to UTF\-8.
 .SH IOC
-El menú
+The
 .B IOCs
-resalta dominios, direcciones IP, URL, nombres de ejecutables y hashes
-MD5, SHA\-1 y SHA\-256, también dentro de código.
-.B Desactivar IOCs
-(Ctrl+W) los convierte en una forma que no se puede pulsar ni abrir por
-error, como
+menu highlights domains, IP addresses, URLs, executable names and MD5,
+SHA\-1 and SHA\-256 hashes, also inside code.
+.B Defang IOCs
+(Ctrl+W) turns them into a form that cannot be clicked or opened by
+mistake, such as
 .BR evil[.]com ,
 .B 1[.]2[.]3[.]4
-o
+or
 .BR hxxp:// ,
-y
-.B Reactivar IOCs
-hace lo contrario. Con
-.B Desactivar al escribir
-se desactivan en el momento de escribirlos o pegarlos.
-.B Copiar lista de IOCs
-copia al portapapeles todos los indicadores sin repetir.
-.SH CIFRADO
-.B Archivo \(-> Cifrar
-pide una contraseña de al menos 15 caracteres con letras, números y
-símbolos. A partir de ese momento el fichero se guarda cifrado con
-XChaCha20\-Poly1305. La clave se obtiene de la contraseña con Argon2id
-(64 MiB de memoria, 3 pasadas). Si se pierde la contraseña no hay forma
-de recuperar el contenido.
+and
+.B Refang IOCs
+does the opposite. With
+.B Defang while typing
+they are defanged as soon as they are typed or pasted.
+.B Copy IOC list
+copies every indicator to the clipboard, without repetitions.
+.SH ENCRYPTION
+.B File \(-> Encrypt
+asks for a password of at least 15 characters with letters, numbers and
+symbols. From then on the file is saved encrypted with
+XChaCha20\-Poly1305. The key is derived from the password with Argon2id
+(64 MiB of memory, 3 passes). If the password is lost, there is no way to
+recover the content.
 .PP
-.B Archivo \(-> Quitar cifrado
-vuelve a guardarlo en claro.
-.SH IDIOMA
-La interfaz está en 23 idiomas. La primera vez se usa el idioma del
-sistema (variables
+.B File \(-> Remove encryption
+saves it in clear again.
+.SH LANGUAGE
+The interface is available in 23 languages. The first time, the system
+language is used (variables
 .BR LANGUAGE ,
 .BR LC_ALL ,
 .B LC_MESSAGES
-y
+and
 .BR LANG )
-si está disponible, y si no, español.
-.B Ver \(-> Idioma
-permite cambiarlo.
-.SH FICHEROS
+if it is available, and Spanish otherwise.
+.B View \(-> Language
+changes it.
+.SH FILES
 .TP
 .I ~/.config/isi/config
-Idioma y preferencias (números de línea y opciones de IOC). Si existe
-.BR XDG_CONFIG_HOME ,
-se usa esa carpeta.
+Language and preferences (line numbers and IOC options). If
+.B XDG_CONFIG_HOME
+is set, that directory is used.
 .TP
-.IB fichero ~
-Copia de rescate que se escribe si la terminal se cierra o el programa
-recibe SIGHUP o SIGTERM con cambios sin guardar. Si el fichero estaba
-cifrado, la copia también lo está.
-.SH LÍMITES
-No abre ficheros de más de 1 GB.
-.SH AVISOS
-Los mensajes aparecen en una fila en la parte de abajo, que se cierra
-sola al cabo de un minuto, con doble clic o con
+.IB file ~
+Rescue copy written if the terminal is closed or the program receives
+SIGHUP or SIGTERM with unsaved changes. If the file was encrypted, the
+copy is encrypted too.
+.SH LIMITS
+Files larger than 1 GB are not opened.
+.SH MESSAGES
+Messages appear in a row at the bottom, which closes by itself after a
+minute, with a double click or with
 .BR Esc .
-.SH SEGURIDAD
-Los caracteres de control y las secuencias de escape del fichero se
-muestran como
+.SH SECURITY
+Control characters and escape sequences in the file are shown as
 .B ^X
-y nunca se envían a la terminal. Los caracteres invisibles o de
-dirección del texto se muestran como
+and are never sent to the terminal. Invisible and text direction
+characters are shown as
 .BR ? .
-El guardado escribe primero en un fichero temporal y después lo
-renombra, así que un corte a mitad no deja el fichero a medias.
-.SH AUTOR
+Saving first writes a temporary file and then renames it, so an
+interruption halfway does not leave a half\-written file.
+.SH AUTHOR
 zil00g <zil00g@protonmail.com>
-.SH LICENCIA
-GNU GPL versión 3 o posterior. El cifrado usa Monocypher, con licencia
-BSD de dos cláusulas o CC0.
+.SH LICENSE
+GNU GPL version 3 or later. Encryption uses Monocypher, under the
+two\-clause BSD license or CC0.

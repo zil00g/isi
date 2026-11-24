@@ -1,2 +1,0 @@
-Test-Command: isi -v && isi -h > /dev/null
-Restrictions: superficial

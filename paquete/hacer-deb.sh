@@ -15,16 +15,16 @@ chmod 755 "$raiz"
 trap 'rm -rf "$raiz"' EXIT
 
 install -Dm755 "$bin" "$raiz/usr/bin/isi"
-install -d "$raiz/usr/share/man/man1" "$raiz/usr/share/doc/isi" "$raiz/DEBIAN"
+install -d "$raiz/usr/share/man/man1" "$raiz/usr/share/man/es/man1" "$raiz/usr/share/doc/isi" "$raiz/DEBIAN"
 gzip -9n < isi.1 > "$raiz/usr/share/man/man1/isi.1.gz"
+gzip -9n < man/es/isi.1 > "$raiz/usr/share/man/es/man1/isi.1.gz"
 cp paquete/copyright "$raiz/usr/share/doc/isi/copyright"
-chmod 644 "$raiz/usr/share/man/man1/isi.1.gz" "$raiz/usr/share/doc/isi/copyright"
+chmod 644 "$raiz/usr/share/man/man1/isi.1.gz" "$raiz/usr/share/man/es/man1/isi.1.gz" "$raiz/usr/share/doc/isi/copyright"
 
 (cd "$raiz" && find usr -type f | sort | xargs md5sum > DEBIAN/md5sums)
 chmod 644 "$raiz/DEBIAN/md5sums"
 
-sed '/^#DEBHELPER#$/d' debian/isi.postinst > "$raiz/DEBIAN/postinst"
-sed '/^#DEBHELPER#$/d' debian/isi.prerm > "$raiz/DEBIAN/prerm"
+cp paquete/postinst paquete/prerm "$raiz/DEBIAN/"
 chmod 755 "$raiz/DEBIAN/postinst" "$raiz/DEBIAN/prerm"
 
 tam=$(du -sk "$raiz/usr" | cut -f1)
