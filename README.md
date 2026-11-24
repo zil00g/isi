@@ -1,5 +1,7 @@
 # isi
 
+[English](README.en.md)
+
 Editor de texto para la terminal: rápido, sencillo y en 23
 idiomas.
 
@@ -72,6 +74,8 @@ los ficheros cifrados con versiones anteriores se siguen abriendo.
 
 `make estatico` lo compila estático y `make deb` genera el paquete en
 `dist/`. Con musl (`CC=musl-gcc`) sale bastante más pequeño que con glibc.
+`make MONOCYPHER=sistema` usa la biblioteca Monocypher instalada en el
+sistema (la busca con `pkg-config`) en vez de la copia de `monocypher/`.
 
 El binario se compila con protector de pila, `_FORTIFY_SOURCE`, PIE y
 RELRO completo. Al instalar el paquete, isi queda disponible como
@@ -260,8 +264,8 @@ Archivo, Cifrar. Pide una contraseña de 15 caracteres como mínimo con
 letras, números y algún símbolo, y la pide dos veces.
 
 ![Pidiendo la contraseña](capturas/10-cifrar.png)
- Desde ese momento
-cada vez que guardes se guarda cifrado. Al abrirlo con isi pide la
+
+Desde ese momento cada vez que guardes se guarda cifrado. Al abrirlo con isi pide la
 contraseña.
 
 Si la olvidas no hay manera de recuperar el fichero. Ni yo ni nadie.

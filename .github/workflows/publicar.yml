@@ -28,15 +28,15 @@ jobs:
             arch: armhf
             estatico: -static
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
       - name: Compilar y empaquetar
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
           docker run --rm --platform ${{ matrix.plataforma }} -e SOURCE_DATE_EPOCH -v "$PWD":/src -w /src \
             alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc \
             sh paquete/compilar.sh ${{ matrix.arch }} ${{ matrix.estatico }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: isi-${{ matrix.arch }}
           path: dist/*
@@ -46,7 +46,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true

@@ -5,12 +5,22 @@ CFLAGS ?= -Os -Wall -Wextra
 CPPFLAGS ?= -D_FORTIFY_SOURCE=2
 DURO = -fstack-protector-strong -fPIE
 ENLACE = -pie -Wl,-z,relro,-z,now
-FUENTES = isi.c monocypher/monocypher.c
+MONOCYPHER ?= incluido
+
+ifeq ($(MONOCYPHER),sistema)
+MONO_C = $(shell pkg-config --cflags monocypher)
+MONO_L = $(shell pkg-config --libs monocypher)
+MONO =
+else
+MONO_C = -Imonocypher
+MONO_L =
+MONO = monocypher/monocypher.c monocypher/monocypher.h
+endif
 
 all: isi
 
-isi: $(FUENTES) idiomas.h monocypher/monocypher.h
-	$(CC) -std=c99 $(DURO) $(CPPFLAGS) $(CFLAGS) -o $@ $(FUENTES) $(ENLACE) $(LDFLAGS)
+isi: isi.c idiomas.h $(MONO)
+	$(CC) -std=c99 $(DURO) $(MONO_C) $(CPPFLAGS) $(CFLAGS) -o $@ isi.c $(filter %.c,$(MONO)) $(ENLACE) $(LDFLAGS) $(MONO_L)
 
 ESTATICO ?= -static-pie
 
@@ -20,8 +30,8 @@ estatico: clean
 deb: estatico
 	sh paquete/hacer-deb.sh isi $(VERSION)
 
-pruebas/pruebas: pruebas/pruebas.c $(FUENTES) idiomas.h monocypher/monocypher.h
-	$(CC) -std=c99 $(DURO) $(CPPFLAGS) $(CFLAGS) -o $@ pruebas/pruebas.c monocypher/monocypher.c $(ENLACE) $(LDFLAGS)
+pruebas/pruebas: pruebas/pruebas.c isi.c idiomas.h $(MONO)
+	$(CC) -std=c99 $(DURO) $(MONO_C) $(CPPFLAGS) $(CFLAGS) -o $@ pruebas/pruebas.c $(filter %.c,$(MONO)) $(ENLACE) $(LDFLAGS) $(MONO_L)
 
 check: pruebas/pruebas
 	./pruebas/pruebas pruebas

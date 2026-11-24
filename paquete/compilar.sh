@@ -15,6 +15,7 @@ apk add --no-cache \
 	make=4.4.1-r2 dpkg=1.22.6-r1 tar=1.35-r2 gzip=1.13-r0 xz=5.8.3-r0 \
 	xz-libs=5.8.3-r0 coreutils=9.5-r2 > /dev/null
 
+make check
 make estatico ESTATICO="$estatico"
 ./isi -v
 

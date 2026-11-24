@@ -28,7 +28,7 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
-#include "monocypher/monocypher.h"
+#include "monocypher.h"
 #include "idiomas.h"
 
 #define VERSION "1.0.1"
