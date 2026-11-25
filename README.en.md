@@ -35,18 +35,18 @@ Download the `.deb` for your machine from the
 
 | Package | For |
 |---|---|
-| `isi_1.0.2_amd64.deb` | 64-bit PCs and laptops |
-| `isi_1.0.2_i386.deb` | Old 32-bit PCs |
-| `isi_1.0.2_arm64.deb` | Raspberry Pi 3, 4 and 5 with a 64-bit system |
-| `isi_1.0.2_armhf.deb` | Raspberry Pi with 32-bit Raspberry Pi OS |
+| `isi_1.0.3_amd64.deb` | 64-bit PCs and laptops |
+| `isi_1.0.3_i386.deb` | Old 32-bit PCs |
+| `isi_1.0.3_arm64.deb` | Raspberry Pi 3, 4 and 5 with a 64-bit system |
+| `isi_1.0.3_armhf.deb` | Raspberry Pi with 32-bit Raspberry Pi OS |
 
 and, in the folder where you downloaded it:
 
 ```sh
-sudo apt install ./isi_1.0.2_amd64.deb
+sudo apt install ./isi_1.0.3_amd64.deb
 ```
 
-`sudo dpkg -i isi_1.0.2_amd64.deb` works too.
+`sudo dpkg -i isi_1.0.3_amd64.deb` works too.
 
 Each release page lists the SHA-256 sums of every file. To check that
 the one you downloaded is intact, also download `SHA256SUMS` and, in the
@@ -91,6 +91,8 @@ have): `sudo update-alternatives --config editor` to choose it.
 ```sh
 isi file.txt
 isi -r /etc/fstab    # read-only
+isi +120 report.txt  # start at line 120
+isi report.txt:120   # same thing, the way grep -n prints it
 ```
 
 ![Table menu](capturas/02-menus.png)
@@ -117,6 +119,25 @@ used ones:
 
 Messages appear in a row at the bottom that goes away by itself after a
 minute, with a double click or with Esc.
+
+If someone changes the file while you have it open, another program or
+a coworker over SSH, isi asks you before overwriting it when you save.
+
+### Searching with regular expressions
+
+Ctrl+F and Ctrl+R take regular expressions too. Put them between
+slashes, and they need at least one of these characters:
+`[ ] ( ) * + ? { } | ^ $ \`. Case doesn't matter. Some examples:
+
+```
+/[0-9a-f]{64}/                    SHA-256 hashes
+/([0-9]{1,3}\.){3}[0-9]{1,3}/     IPv4 addresses
+/^2026-11-0[1-7]/                 lines from the first week
+```
+
+If there's none of those characters it's searched as is, like always.
+So a path like `/tmp/` or `/home/ana/.config/` is searched and replaced
+as plain text.
 
 ### Copy and paste
 

@@ -105,6 +105,60 @@ static int vector(void)
 	return deriva(CLAVE, s, k) && !memcmp(k, e, 32);
 }
 
+static int manipulado(const char *orig, size_t n, size_t corta, int pos)
+{
+	char q[256], p[300], *b;
+	size_t m;
+	int r, fd;
+
+	snprintf(q, sizeof q, "%.200s/isi-prueba-XXXXXX", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
+	if (!mkdtemp(q))
+		return 0;
+	snprintf(p, sizeof p, "%s/m.isi", q);
+	b = malloc(n + 1);
+	memcpy(b, orig, n);
+	b[n] = 'x';
+	if (pos >= 0)
+		b[pos] ^= 1;
+	fd = open(p, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	r = fd >= 0 && write(fd, b, corta) == (ssize_t)corta;
+	if (fd >= 0)
+		close(fd);
+	free(b);
+	if (r && abre_cifrado(p, CLAVE, &b, &m)) {
+		free(b);
+		r = 0;
+	}
+	unlink(p);
+	rmdir(q);
+	return r;
+}
+
+static void pruebas_manipulado(const char *p)
+{
+	static const int pos[] = { 0, 3, 4, 19, 20, 43, 44, 59, 60, -2 };
+	static const size_t cortes[] = { 0, 4, 43, 44, 59, 60 };
+	char *b, q[96];
+	size_t n, i;
+	int e, bien = 1;
+
+	if (!(b = leetodo(p, &n, &e))) {
+		ok(0, "leer el fichero cifrado de prueba");
+		return;
+	}
+	ok(!manipulado(b, n, n, -1), "sin tocarlo se abre");
+	for (i = 0; i < sizeof pos / sizeof *pos; i++) {
+		snprintf(q, sizeof q, "cambiar el byte %d no deja abrirlo", pos[i] < 0 ? (int)n - 1 : pos[i]);
+		ok(manipulado(b, n, n, pos[i] < 0 ? (int)n - 1 : pos[i]), q);
+	}
+	for (i = 0; i < sizeof cortes / sizeof *cortes; i++)
+		bien &= manipulado(b, n, cortes[i], -1);
+	ok(bien, "cortado a 0, 4, 43, 44, 59 o 60 bytes no se abre");
+	ok(manipulado(b, n, n - 1, -1), "sin el último byte no se abre");
+	ok(manipulado(b, n, n + 1, -1), "con un byte de más no se abre");
+	free(b);
+}
+
 static void pruebas_cifrado(void)
 {
 	static const char t[] = "línea uno\nñandú 東京\n\nfin";
@@ -120,6 +174,7 @@ static void pruebas_cifrado(void)
 	}
 	ok(!abre_cifrado(p, "Otra-clave-mala-123", &b, &n), "contraseña incorrecta");
 	ok(vector(), "Argon2id da la misma clave que libsodium");
+	pruebas_manipulado(p);
 
 	snprintf(q, sizeof q, "%.200s/isi-prueba-XXXXXX", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
 	if (!mkdtemp(q)) {
@@ -313,6 +368,51 @@ static void pruebas_idiomas(void)
 	ok(bien, "las traducciones usan los mismos %s y %d que el español");
 }
 
+static void pruebas_binario(void)
+{
+	char q[256], p[300], b[1100], *l;
+	size_t n, i;
+	int e;
+
+	for (i = 0; i < 1024; i++)
+		b[i] = i;
+	memcpy(b + 1024, "\0\0ELF\x7f\n\xff\xfe\r\n", 11);
+	snprintf(q, sizeof q, "%.200s/isi-prueba-XXXXXX", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
+	if (!mkdtemp(q)) {
+		ok(0, "carpeta temporal");
+		return;
+	}
+	snprintf(p, sizeof p, "%s/bin", q);
+	l = malloc(1035);
+	memcpy(l, b, 1035);
+	cargatexto(l, 1035);
+	free(l);
+	cif = 0;
+	ok(guarda(p), "guardar un binario");
+	l = leetodo(p, &n, &e);
+	ok(l && n == 1035 && !memcmp(l, b, n), "un binario se guarda sin perder ni cambiar un byte");
+	free(l);
+	unlink(p);
+	rmdir(q);
+}
+
+static int esexpresion(const char *q)
+{
+	snprintf(qb, sizeof qb, "%s", q);
+	return expresion();
+}
+
+static void pruebas_busqueda(void)
+{
+	ok(!esexpresion("/tmp/") && !esexpresion("/var/log/") && !esexpresion("/home/ana/.config/"),
+		"una ruta entre barras se busca tal cual");
+	ok(!esexpresion("//") && !esexpresion("tmp") && !esexpresion("/a.b/"), "sin barras o sin caracteres especiales no es expresión");
+	ok(esexpresion("/[0-9a-f]{64}/") == 1 && esexpresion("/^2026/") == 1 && esexpresion("/a|b/") == 1,
+		"con caracteres especiales entre barras es expresión");
+	ok(esexpresion("/([0-9]/") < 0, "una expresión mal escrita no se usa");
+	qb[0] = 0;
+}
+
 int main(int argc, char **argv)
 {
 	if (argc > 1)
@@ -322,6 +422,8 @@ int main(int argc, char **argv)
 	pruebas_csv();
 	pruebas_hoja();
 	pruebas_idiomas();
+	pruebas_binario();
+	pruebas_busqueda();
 	printf("%d pruebas, %d fallos\n", hechas, falladas);
 	return falladas != 0;
 }

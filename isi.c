@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
+#include <regex.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -31,7 +32,7 @@
 #include "monocypher.h"
 #include "idiomas.h"
 
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 #define TABU 4
 #define MAXC 256
 #define GRANDE 400
@@ -60,7 +61,7 @@ typedef struct { char c[8]; unsigned char n, w, a; } Celda;
 typedef struct { int t, y, x, g, n; char *s; } Paso;
 typedef struct { int t; const char *k; int a; } Op;
 typedef struct { char *n; int d; } Ent;
-typedef struct { char **c; int f, fc, k, kc, e, y0, y1, viva; } Tabla;
+typedef struct { char **c, *bl; size_t bu, bc; int f, fc, k, kc, e, y0, y1, viva; } Tabla;
 #define CE(t, i, j) ((t)->c[(size_t)(i) * (t)->kc + (j)])
 
 static Lin *L, ob, clip, pg;
@@ -915,6 +916,8 @@ static int esquema(const char *s, int i, int n)
 	static const char *x[] = { "://", "[://]", "[:]//" };
 	int k, l, m;
 
+	if (i >= n || (tolower((unsigned char)s[i]) != 'h' && tolower((unsigned char)s[i]) != 'f'))
+		return 0;
 	for (k = 0; k < 6; k++) {
 		l = strlen(e[k]);
 		if (i + l > n || strncasecmp(s + i, e[k], l))
@@ -966,16 +969,17 @@ static int ioc(const char *s, int i, int n, int *fin)
 
 static int cambia(const char *s, int n, Lin *o, int activar)
 {
-	int i = 0, j, t, k, c = 0, a, h;
+	int i = 0, j, t, k, c = 0, a, h, p = 0;
 	Lin u = { 0 };
 
 	o->n = 0;
+	crece(o, n);
 	while (i < n) {
 		if (!(t = ioc(s, i, n, &j))) {
-			add(o, s + i, 1);
 			i++;
 			continue;
 		}
+		add(o, s + p, i - p);
 		u.n = 0;
 		k = i;
 		h = j;
@@ -1016,8 +1020,9 @@ static int cambia(const char *s, int n, Lin *o, int activar)
 		if (t != 5 && (u.n != j - i || memcmp(u.s, s + i, u.n)))
 			c++;
 		add(o, u.s, u.n);
-		i = j;
+		i = p = j;
 	}
+	add(o, s + p, n - p);
 	free(u.s);
 	return c;
 }
@@ -1507,12 +1512,39 @@ static int escribe(const char *p, const char *d, size_t n)
 	return 0;
 }
 
+static struct stat visto;
+static int existia;
+
+static void apunta(const char *p)
+{
+	existia = !stat(p, &visto);
+}
+
+static int tocado(const char *p)
+{
+	struct stat st;
+	int e = !stat(p, &st);
+
+	if (!e || !existia)
+		return e && !existia;
+	return st.st_mtim.tv_sec != visto.st_mtim.tv_sec || st.st_mtim.tv_nsec != visto.st_mtim.tv_nsec ||
+		st.st_size != visto.st_size || st.st_ino != visto.st_ino || st.st_dev != visto.st_dev;
+}
+
+static int elegir(const char *q, const char *ops);
+
 static int guarda(const char *p)
 {
 	Lin o = { 0 };
-	char *c = 0;
+	char *c = 0, t[PATH_MAX + 256];
 	size_t n;
 	int i, e;
+
+	if (p == ruta && tocado(p)) {
+		snprintf(t, sizeof t, tx(T_TOCADO), base(p));
+		if (elegir(t, ops(2, T_SI, T_NO)))
+			return 0;
+	}
 
 	for (i = 0; i < nl; i++) {
 		add(&o, L[i].s, L[i].n);
@@ -1546,6 +1578,7 @@ static int guarda(const char *p)
 	}
 	if (p != ruta)
 		snprintf(ruta, sizeof ruta, "%s", p);
+	apunta(ruta);
 	mod = 0;
 	avisa(tx(cif ? T_GUARDADOC : T_GUARDADO), base(ruta));
 	return 1;
@@ -1724,6 +1757,7 @@ static int abre(const char *p)
 		vacio();
 		cif = 0;
 		snprintf(ruta, sizeof ruta, "%s", p);
+		apunta(ruta);
 		hoja = 0;
 		if (forzado || escsv(p))
 			iniciahoja();
@@ -1756,6 +1790,7 @@ static int abre(const char *p)
 		crypto_wipe(b, n);
 	free(b);
 	snprintf(ruta, sizeof ruta, "%s", p);
+	apunta(ruta);
 	hoja = 0;
 	if (forzado || escsv(p))
 		iniciahoja();
@@ -1840,13 +1875,16 @@ static int lista(const char *dir, Ent **e, int n)
 	return n;
 }
 
-static int explora(int g, int tit, char *out)
+typedef struct {
+	char dir[PATH_MAX], nom[256], pre[64];
+	long tpre;
+	Ent *e;
+	int n, s, top, foco, g, y0, xb, w, lh;
+} Explora;
+
+static int empieza(Explora *x)
 {
-	char dir[PATH_MAX], nom[256] = "", p[PATH_MAX * 2], t[PATH_MAX], vie[256], pre[64] = "";
-	long tpre = 0;
-	Ent *e = 0;
-	int n, s = 0, top = 0, foco = g, k, h, w, y0, xb, lh, i, y, r = 0, act, d;
-	struct stat st;
+	char p[PATH_MAX];
 
 	if (ruta[0]) {
 		snprintf(p, sizeof p, "%s", ruta);
@@ -1856,197 +1894,248 @@ static int explora(int g, int tit, char *out)
 			strcpy(p, ".");
 		if (!p[0])
 			strcpy(p, "/");
-		if (g)
-			snprintf(nom, sizeof nom, "%.255s", base(ruta));
+		if (x->g)
+			snprintf(x->nom, sizeof x->nom, "%.255s", base(ruta));
 	} else
 		strcpy(p, ".");
-	if (!realpath(p, dir) && !getcwd(dir, sizeof dir))
-		strcpy(dir, "/");
-	if ((n = lista(dir, &e, 0)) < 0) {
-		strcpy(dir, "/");
-		n = lista(dir, &e, 0);
+	if (!realpath(p, x->dir) && !getcwd(x->dir, sizeof x->dir))
+		strcpy(x->dir, "/");
+	if ((x->n = lista(x->dir, &x->e, 0)) < 0) {
+		strcpy(x->dir, "/");
+		x->n = lista(x->dir, &x->e, 0);
 	}
-	if (n < 0) {
+	return x->n >= 0;
+}
+
+static void pintaexplora(Explora *x, int tit)
+{
+	char t[PATH_MAX];
+	int i, y, k = 0, act, h = th;
+
+	pinta();
+	x->w = cols - 8 > 76 ? 76 : cols - 8;
+	x->y0 = 3;
+	x->xb = (cols - x->w) / 2;
+	x->lh = h - 6 - (x->g ? 2 : 0);
+	if (x->lh < 1)
+		x->lh = 1;
+	if (x->s >= x->n)
+		x->s = x->n - 1;
+	if (x->s < 0)
+		x->s = 0;
+	if (x->s < x->top)
+		x->top = x->s;
+	if (x->s >= x->top + x->lh)
+		x->top = x->s - x->lh + 1;
+	caja(x->y0, x->xb, h, x->w, tx(x->g ? T_T_COMO : tit));
+	snprintf(t, sizeof t, "%s", x->dir);
+	for (i = 0; ancho(t + i) > x->w - 4; )
+		for (i++; (t[i] & 0xC0) == 0x80; i++)
+			;
+	texto(x->y0 + 1, x->xb + 2, t + i, NUM, x->w - 4);
+	raya(x->y0 + 2, x->xb, x->w);
+	for (i = 0; i < x->lh && x->top + i < x->n; i++) {
+		y = x->y0 + 3 + i;
+		act = x->top + i == x->s;
+		if (act)
+			rellena(y, x->xb + 1, x->w - 2, " ", x->foco ? CAM : INV);
+		snprintf(t, sizeof t, "%s %s%s", x->e[x->top + i].d ? "▸" : " ", x->e[x->top + i].n,
+			x->e[x->top + i].d ? "/" : "");
+		texto(y, x->xb + 2, t, act ? (x->foco ? CAM : INV) : x->e[x->top + i].d ? CAR : NOR, x->w - 4);
+	}
+	y = x->y0 + 3 + x->lh;
+	if (x->g) {
+		raya(y, x->xb, x->w);
+		k = 2 + texto(y + 1, x->xb + 2, tx(T_NOMBRE), TIT, x->w - 4);
+		k += texto(y + 1, x->xb + k, x->nom, x->foco ? CAM : NOR, x->w - 2 - k);
+		y += 2;
+	}
+	raya(y, x->xb, x->w);
+	texto(y + 1, x->xb + 2, tx(x->g ? T_PIE_COMO : T_PIE_ABRIR), NUM, x->w - 4);
+	vuelca(x->g && x->foco ? y - 1 : -1, x->xb + k);
+}
+
+static int ratonexplora(Explora *x)
+{
+	int y, d;
+
+	if (rs || (rb & 32))
+		return 0;
+	if (rb == 64 || rb == 65) {
+		x->s += rb == 64 ? -3 : 3;
+		return 0;
+	}
+	if (rb & 3)
+		return 0;
+	d = doble_clic();
+	y = ry - x->y0 - 3;
+	if (rx > x->xb && rx < x->xb + x->w - 1 && y >= 0 && y < x->lh && x->top + y < x->n) {
+		d = (x->top + y == x->s && !x->foco) || d;
+		x->s = x->top + y;
+		x->foco = 0;
+		return d;
+	}
+	if (x->g && ry == x->y0 + 4 + x->lh)
+		x->foco = 1;
+	return 0;
+}
+
+static void letraexplora(Explora *x, int k)
+{
+	char t[8];
+	int i = cod(k, t), n;
+
+	if (x->g) {
+		n = strlen(x->nom);
+		if (n + i < (int)sizeof x->nom && k != '/') {
+			memcpy(x->nom + n, t, i);
+			x->nom[n + i] = 0;
+			x->foco = 1;
+		}
+		return;
+	}
+	if (ahora() - x->tpre > 1000)
+		x->pre[0] = 0;
+	x->tpre = ahora();
+	if ((n = strlen(x->pre)) + i < (int)sizeof x->pre) {
+		memcpy(x->pre + n, t, i);
+		x->pre[n + i] = 0;
+	}
+	for (i = 0; i < x->n; i++)
+		if (prefijo(x->e[(x->s + i) % x->n].n, x->pre)) {
+			x->s = (x->s + i) % x->n;
+			break;
+		}
+}
+
+static int sirve(const char *p, char *out)
+{
+	if (strlen(p) >= PATH_MAX)
+		return 0;
+	strcpy(out, p);
+	return 1;
+}
+
+static int eligeexplora(Explora *x, char *p, size_t np, char *vie, char *out)
+{
+	char t[PATH_MAX + 64];
+	struct stat st;
+
+	if (x->foco) {
+		if (!x->nom[0])
+			return -1;
+		snprintf(p, np, "%s/%s", strcmp(x->dir, "/") ? x->dir : "", x->nom);
+		if (!stat(p, &st) && S_ISDIR(st.st_mode)) {
+			x->nom[0] = 0;
+			vie[0] = 0;
+			return 0;
+		}
+		if (!stat(p, &st)) {
+			snprintf(t, sizeof t, tx(T_EXISTE), base(p));
+			if (elegir(t, ops(2, T_SI, T_NO)))
+				return -1;
+		}
+		return sirve(p, out) ? 1 : -1;
+	}
+	if (!x->n)
+		return -1;
+	snprintf(p, np, "%s/%s", strcmp(x->dir, "/") ? x->dir : "", x->e[x->s].n);
+	if (!x->e[x->s].d) {
+		if (x->g) {
+			snprintf(x->nom, sizeof x->nom, "%s", x->e[x->s].n);
+			x->foco = 1;
+			return -1;
+		}
+		return sirve(p, out) ? 1 : -1;
+	}
+	if (!strcmp(x->e[x->s].n, ".."))
+		snprintf(vie, 256, "%s", base(x->dir));
+	else
+		vie[0] = 0;
+	return 0;
+}
+
+static void entra(Explora *x, const char *p, const char *vie)
+{
+	char t[PATH_MAX];
+	int i;
+
+	if (!realpath(p, t) || (i = lista(t, &x->e, x->n)) < 0) {
+		avisa(tx(T_NOENTRA), base(p));
+		return;
+	}
+	strcpy(x->dir, t);
+	x->n = i;
+	x->s = x->top = 0;
+	x->pre[0] = 0;
+	for (i = 0; vie[0] && i < x->n; i++)
+		if (!strcmp(x->e[i].n, vie))
+			x->s = i;
+}
+
+static int explora(int g, int tit, char *out)
+{
+	static Explora x;
+	char p[PATH_MAX * 2], vie[256];
+	int k, i, r = 0, act;
+
+	memset(&x, 0, sizeof x);
+	x.g = x.foco = g;
+	if (!empieza(&x)) {
 		avisa("%s", tx(T_NOLEE));
 		return 0;
 	}
 	for (;;) {
-		pinta();
-		h = th;
-		w = cols - 8 > 76 ? 76 : cols - 8;
-		y0 = 3;
-		xb = (cols - w) / 2;
-		lh = h - 6 - (g ? 2 : 0);
-		if (lh < 1)
-			lh = 1;
-		if (s >= n)
-			s = n - 1;
-		if (s < 0)
-			s = 0;
-		if (s < top)
-			top = s;
-		if (s >= top + lh)
-			top = s - lh + 1;
-		caja(y0, xb, h, w, tx(g ? T_T_COMO : tit));
-		snprintf(t, sizeof t, "%s", dir);
-		for (k = 0; ancho(t + k) > w - 4; )
-			for (k++; (t[k] & 0xC0) == 0x80; k++)
-				;
-		texto(y0 + 1, xb + 2, t + k, NUM, w - 4);
-		raya(y0 + 2, xb, w);
-		for (i = 0; i < lh && top + i < n; i++) {
-			y = y0 + 3 + i;
-			act = top + i == s;
-			if (act)
-				rellena(y, xb + 1, w - 2, " ", foco ? CAM : INV);
-			snprintf(t, sizeof t, "%s %s%s", e[top + i].d ? "▸" : " ", e[top + i].n, e[top + i].d ? "/" : "");
-			texto(y, xb + 2, t, act ? (foco ? CAM : INV) : e[top + i].d ? CAR : NOR, w - 4);
-		}
-		y = y0 + 3 + lh;
-		if (g) {
-			raya(y, xb, w);
-			k = 2 + texto(y + 1, xb + 2, tx(T_NOMBRE), TIT, w - 4);
-			k += texto(y + 1, xb + k, nom, foco ? CAM : NOR, w - 2 - k);
-			y += 2;
-		}
-		raya(y, xb, w);
-		texto(y + 1, xb + 2, tx(g ? T_PIE_COMO : T_PIE_ABRIR), NUM, w - 4);
-		vuelca(g && foco ? y - 1 : -1, xb + k);
+		pintaexplora(&x, tit);
 		k = tecla(-1);
 		act = 0;
 		if (k == K_ESC)
 			break;
-		if (k == K_RATON) {
-			if (rs || (rb & 32))
-				continue;
-			if (rb == 64 || rb == 65) {
-				s += rb == 64 ? -3 : 3;
-				continue;
-			}
-			if (rb & 3)
-				continue;
-			d = doble_clic();
-			y = ry - y0 - 3;
-			if (rx > xb && rx < xb + w - 1 && y >= 0 && y < lh && top + y < n) {
-				act = (top + y == s && !foco) || d;
-				s = top + y;
-				foco = 0;
-				if (!act)
-					continue;
-			} else if (g && ry == y0 + 4 + lh) {
-				foco = 1;
-				continue;
-			} else
-				continue;
-		}
+		if (k == K_RATON && !(act = ratonexplora(&x)))
+			continue;
 		if (k == 9 || k == K_STAB) {
-			foco = g && !foco;
+			x.foco = g && !x.foco;
 			continue;
 		}
 		if (k == K_ARR || k == K_ABA || k == K_REP || k == K_AVP || k == K_INI || k == K_FIN) {
 			switch (k) {
-			case K_ARR: s--; break;
-			case K_ABA: s++; break;
-			case K_REP: s -= lh; break;
-			case K_AVP: s += lh; break;
-			case K_INI: s = 0; break;
-			default: s = n - 1;
+			case K_ARR: x.s--; break;
+			case K_ABA: x.s++; break;
+			case K_REP: x.s -= x.lh; break;
+			case K_AVP: x.s += x.lh; break;
+			case K_INI: x.s = 0; break;
+			default: x.s = x.n - 1;
 			}
-			foco = 0;
+			x.foco = 0;
 			continue;
 		}
 		if (k == 127 || k == 8) {
-			if (foco && nom[0]) {
-				i = strlen(nom);
-				while (i && (nom[i - 1] & 0xC0) == 0x80)
+			if (x.foco && x.nom[0]) {
+				i = strlen(x.nom);
+				while (i && (x.nom[i - 1] & 0xC0) == 0x80)
 					i--;
-				nom[i ? i - 1 : 0] = 0;
+				x.nom[i ? i - 1 : 0] = 0;
 				continue;
 			}
-			snprintf(vie, sizeof vie, "%s", base(dir));
-			snprintf(p, sizeof p, "%s/..", dir);
+			snprintf(vie, sizeof vie, "%s", base(x.dir));
+			snprintf(p, sizeof p, "%s/..", x.dir);
 		} else if (k == 13 || act) {
-			if (foco) {
-				if (!nom[0])
-					continue;
-				snprintf(p, sizeof p, "%s/%s", strcmp(dir, "/") ? dir : "", nom);
-				if (!stat(p, &st) && S_ISDIR(st.st_mode)) {
-					nom[0] = 0;
-					vie[0] = 0;
-				} else {
-					if (!stat(p, &st)) {
-						snprintf(t, sizeof t, tx(T_EXISTE), base(p));
-						if (elegir(t, ops(2, T_SI, T_NO)))
-							continue;
-					}
-					if (strlen(p) >= PATH_MAX)
-						continue;
-					strcpy(out, p);
-					r = 1;
-					break;
-				}
-			} else {
-				if (!n)
-					continue;
-				snprintf(p, sizeof p, "%s/%s", strcmp(dir, "/") ? dir : "", e[s].n);
-				if (!e[s].d) {
-					if (g) {
-						snprintf(nom, sizeof nom, "%s", e[s].n);
-						foco = 1;
-						continue;
-					}
-					if (strlen(p) >= PATH_MAX)
-						continue;
-					strcpy(out, p);
-					r = 1;
-					break;
-				}
-				if (!strcmp(e[s].n, ".."))
-					snprintf(vie, sizeof vie, "%s", base(dir));
-				else
-					vie[0] = 0;
+			if ((i = eligeexplora(&x, p, sizeof p, vie, out)) < 0)
+				continue;
+			if (i) {
+				r = 1;
+				break;
 			}
-		} else if (k >= 32 && k < K_ESC) {
-			if (g) {
-				i = cod(k, t);
-				if (strlen(nom) + i < sizeof nom && k != '/') {
-					k = strlen(nom);
-					memcpy(nom + k, t, i);
-					nom[k + i] = 0;
-					foco = 1;
-				}
-			} else {
-				if (ahora() - tpre > 1000)
-					pre[0] = 0;
-				tpre = ahora();
-				i = cod(k, t);
-				if ((k = strlen(pre)) + i < (int)sizeof pre) {
-					memcpy(pre + k, t, i);
-					pre[k + i] = 0;
-				}
-				for (i = 0; i < n; i++)
-					if (prefijo(e[(s + i) % n].n, pre)) {
-						s = (s + i) % n;
-						break;
-					}
-			}
-			continue;
-		} else
-			continue;
-		if (!realpath(p, t) || (i = lista(t, &e, n)) < 0) {
-			avisa(tx(T_NOENTRA), base(p));
+		} else {
+			if (k >= 32 && k < K_ESC)
+				letraexplora(&x, k);
 			continue;
 		}
-		strcpy(dir, t);
-		n = i;
-		s = top = 0;
-		for (i = 0; vie[0] && i < n; i++)
-			if (!strcmp(e[i].n, vie))
-				s = i;
+		entra(&x, p, vie);
 	}
-	while (n > 0)
-		free(e[--n].n);
-	free(e);
+	while (x.n > 0)
+		free(x.e[--x.n].n);
+	free(x.e);
 	return r;
 }
 
@@ -2157,12 +2246,39 @@ static int filat(int y)
 static void suelta_t(Tabla *t)
 {
 	size_t i, n = (size_t)t->f * t->kc;
+	char *b;
 
-	for (i = 0; i < n; i++)
+	for (i = 0; !t->bl && i < n; i++)
 		free(t->c[i]);
+	while (t->bl) {
+		b = *(char **)t->bl;
+		free(t->bl);
+		t->bl = b;
+	}
 	free(t->c);
 	t->c = 0;
 	t->f = t->fc = t->kc = 0;
+	t->bu = t->bc = 0;
+}
+
+static char *amontona(Tabla *t, const char *s, size_t n)
+{
+	char *b;
+	size_t m;
+
+	if (!t->bl || t->bu + n + 1 > t->bc) {
+		m = n + 1 + sizeof(char *) > 1 << 20 ? n + 1 + sizeof(char *) : 1 << 20;
+		b = re(0, m);
+		*(char **)b = t->bl;
+		t->bl = b;
+		t->bu = sizeof(char *);
+		t->bc = m;
+	}
+	b = t->bl + t->bu;
+	memcpy(b, s, n);
+	b[n] = 0;
+	t->bu += n + 1;
+	return b;
 }
 
 static char **matriz(int f, int k)
@@ -2912,29 +3028,31 @@ static char separador(const char *b, size_t n)
 	return c[m];
 }
 
-static char *celdacsv(Lin *c, int e)
+static char *celdacsv(Lin *c, Tabla *t)
 {
-	char *s, *p;
-	int i, a = 0, b = c->n;
+	char *p;
+	int i, a = 0, b;
 
+	add(c, "", 1);
+	c->n = strlen(c->s);
 	for (i = 0; i < c->n; i++)
 		if (c->s[i] == '\t' || c->s[i] == '\r' || c->s[i] == '\n')
 			c->s[i] = ' ';
+		else if (t->e == 1 && c->s[i] == '|')
+			c->s[i] = '/';
+	while (t->e != 1 && (p = strstr(c->s, "│"))) {
+		*p = '|';
+		memmove(p + 1, p + 3, c->s + c->n - p - 2);
+		c->n -= 2;
+	}
+	b = c->n;
 	while (a < b && c->s[a] == ' ')
 		a++;
 	while (b > a && c->s[b - 1] == ' ')
 		b--;
-	s = strndup(c->s ? c->s + a : "", b - a);
-	if (e == 1)
-		for (p = s; (p = strchr(p, '|')); )
-			*p = '/';
-	else
-		while ((p = strstr(s, "│"))) {
-			*p = '|';
-			memmove(p + 1, p + 3, strlen(p + 3) + 1);
-		}
+	p = amontona(t, c->s + a, b - a);
 	c->n = 0;
-	return s;
+	return p;
 }
 
 static int leecsv(char *b, size_t n, Tabla *t)
@@ -2968,7 +3086,7 @@ static int leecsv(char *b, size_t n, Tabla *t)
 		}
 		if (col < MAXC) {
 			reserva(t, t->f, col + 1);
-			CE(t, t->f - 1, col) = celdacsv(&c, t->e);
+			CE(t, t->f - 1, col) = celdacsv(&c, t);
 		} else {
 			corte = 1;
 			c.n = 0;
@@ -2977,7 +3095,6 @@ static int leecsv(char *b, size_t n, Tabla *t)
 		if (ch == d)
 			continue;
 		if (col == 1 && !CE(t, t->f - 1, 0)[0]) {
-			free(CE(t, t->f - 1, 0));
 			CE(t, t->f - 1, 0) = 0;
 		} else {
 			if (col > t->k)
@@ -3534,11 +3651,64 @@ static int igual(const char *a, const char *b, int n)
 	return 1;
 }
 
+static regex_t patron;
+static Lin lre;
+
+static int expresion(void)
+{
+	static char q[sizeof qb];
+	static int ok;
+	int n = strlen(qb);
+
+	if (n < 3 || qb[0] != '/' || qb[n - 1] != '/' || !strpbrk(qb + 1, "[]()*+?{}|^$\\"))
+		return 0;
+	if (strcmp(q, qb)) {
+		if (ok)
+			regfree(&patron);
+		strcpy(q, qb);
+		qb[n - 1] = 0;
+		ok = !regcomp(&patron, qb + 1, REG_EXTENDED | REG_ICASE | REG_NEWLINE);
+		qb[n - 1] = '/';
+	}
+	return ok ? 1 : -1;
+}
+
+static int casa(int y, int x, int d, int *a, int *b)
+{
+	regmatch_t m;
+	int p = 0, i, j, ha = -1, hb = 0;
+
+	lre.n = 0;
+	add(&lre, L[y].s, L[y].n);
+	add(&lre, "", 1);
+	while (p <= L[y].n && !regexec(&patron, lre.s + p, 1, &m, p ? REG_NOTBOL : 0)) {
+		i = p + m.rm_so;
+		j = p + m.rm_eo;
+		if (j > i) {
+			if (d > 0 && i >= x) {
+				*a = i;
+				*b = j;
+				return 1;
+			}
+			if (d < 0 && i >= x)
+				break;
+			if (d < 0) {
+				ha = i;
+				hb = j;
+			}
+		}
+		p = j > i ? j : i + 1;
+	}
+	*a = ha;
+	*b = hb;
+	return ha >= 0;
+}
+
 static int busca(int d, int vuelta)
 {
-	int n = strlen(qb), y = cy, x = cx, i, j, y1, x1, y2, x2;
+	int n = strlen(qb), y = cy, x = cx, i, j, y1, x1, y2, x2, e = expresion(), b;
 
-	if (!n)
+	if (!n || e < 0)
 		return 0;
 	if (rango(&y1, &x1, &y2, &x2)) {
 		y = d > 0 ? y2 : y1;
@@ -3546,7 +3716,11 @@ static int busca(int d, int vuelta)
 	}
 	for (i = 0; i <= nl; i++) {
 		if (d > 0) {
-			for (j = i ? 0 : x; j + n <= L[y].n; j++)
+			if (e && casa(y, i ? 0 : x, 1, &j, &b)) {
+				n = b - j;
+				goto hit;
+			}
+			for (j = i ? 0 : x; !e && j + n <= L[y].n; j++)
 				if (igual(L[y].s + j, qb, n))
 					goto hit;
 			if (++y == nl) {
@@ -3555,7 +3729,11 @@ static int busca(int d, int vuelta)
 				y = 0;
 			}
 		} else {
-			for (j = (i ? L[y].n : x) - 1; j >= 0; j--)
+			if (e && casa(y, i ? L[y].n + 1 : x, -1, &j, &b)) {
+				n = b - j;
+				goto hit;
+			}
+			for (j = (i ? L[y].n : x) - 1; !e && j >= 0; j--)
 				if (j + n <= L[y].n && igual(L[y].s + j, qb, n))
 					goto hit;
 			if (--y < 0)
@@ -4848,7 +5026,7 @@ static void convierte(void)
 			c.n = 0;
 			add(&c, hv.s, hv.n);
 			reserva(&t, t.f, j + 1);
-			CE(&t, t.f - 1, j) = celdacsv(&c, t.e);
+			CE(&t, t.f - 1, j) = celdacsv(&c, &t);
 		}
 		if (j > t.k)
 			t.k = j;
@@ -5405,14 +5583,143 @@ static int pendiente(void)
 	return ebi < ebn || poll(&p, 1, 0) > 0;
 }
 
-static int filtrocol(int col)
+typedef struct {
+	char e[128];
+	int s, top, x, y, w, h, n, lista, mw;
+} Ventfiltro;
+
+static void marca(int s)
+{
+	int i, r;
+
+	if (s == 2) {
+		for (r = 1, i = 0; i < nlv; i++)
+			r &= dv[lv[i]].on;
+		for (i = 0; i < nlv; i++)
+			dv[lv[i]].on = !r;
+	} else
+		dv[lv[s - 3]].on ^= 1;
+}
+
+static void quitafiltro(int col)
+{
+	if (col < hflc)
+		suelta_f(hfl + col);
+}
+
+static void opcion(int y, int x, int w, const char *t, int act)
+{
+	if (act)
+		rellena(y, x + 1, w - 2, " ", INV);
+	texto(y, x + 2, t, act ? INV : NOR, w - 4);
+}
+
+static void filavalor(Ventfiltro *f, int i)
+{
+	char c[200], b[32];
+	int j = f->top + i, k, r, a = f->s == 2 + j ? INV : NOR, y = f->y + 7 + i;
+
+	if (a == INV)
+		rellena(y, f->x + 1, f->w - 2, " ", INV);
+	if (!j) {
+		for (r = 1, k = 0; k < nlv; k++)
+			r &= dv[lv[k]].on;
+		snprintf(c, sizeof c, "[%s] %s", r ? "x" : " ", tx(T_TODOS));
+		for (k = 0, r = 0; k < nlv; k++)
+			r += dv[lv[k]].n;
+		miles(r, b);
+	} else {
+		Val *v = dv + lv[j - 1];
+		snprintf(c, sizeof c, "[%s] %s", v->on ? "x" : " ", v->s[0] ? v->s : tx(T_VACIAS2));
+		miles(v->n, b);
+	}
+	texto(y, f->x + 2, c, a == INV ? INV : j && !dv[lv[j - 1]].s[0] ? NUM : NOR, f->w - 6 - (int)strlen(b));
+	texto(y, f->x + f->w - 2 - (int)strlen(b), b, a == INV ? INV : NUM, strlen(b));
+}
+
+static void pintafiltro(Ventfiltro *f, int col)
 {
 	static const int ops2[] = { T_ORDAZ, T_ORDZA };
-	char e[128] = "", b[32], c[200];
-	int s = 2, top = 0, k, x = 0, y = 4, w = 44, h = 10, i, j, n = 1, lista = 1, a, mw = 0, cambio = 1, base = 7, r;
+	int i, j;
 
+	f->w = f->mw + 16;
+	if (f->w < 44)
+		f->w = 44;
+	if (f->w > cols - 4)
+		f->w = cols - 4;
+	f->x = colx(col);
+	if (f->x + f->w > cols - 1)
+		f->x = cols - 1 - f->w;
+	f->y = 4;
+	f->h = filas - 2 - f->y;
+	f->lista = f->h - 12;
+	if (f->lista < 1)
+		f->lista = 1;
+	f->n = nlv + 1;
+	if (f->s >= 3 + f->n + 1)
+		f->s = 3 + f->n;
+	if (f->s >= 2 && f->s - 2 < f->top)
+		f->top = f->s - 2;
+	if (f->s >= 2 && f->s - 2 >= f->top + f->lista)
+		f->top = f->s - 2 - f->lista + 1;
+	if (f->s >= 2 + f->n)
+		f->top = f->n > f->lista ? f->n - f->lista : 0;
+	pinta();
+	caja(f->y, f->x, f->h, f->w, 0);
+	for (i = 0; i < 2; i++)
+		opcion(f->y + 1 + i, f->x, f->w, tx(ops2[i]), f->s == i);
+	raya(f->y + 3, f->x, f->w);
+	j = texto(f->y + 4, f->x + 2, tx(T_FILTRO), MEN, f->w - 4);
+	texto(f->y + 4, f->x + 2 + j, ": ", NOR, 2);
+	rellena(f->y + 4, f->x + 4 + j, f->w - 6 - j, " ", CAM);
+	if (f->e[0])
+		texto(f->y + 4, f->x + 4 + j, f->e, CAM, f->w - 6 - j);
+	else
+		texto(f->y + 4, f->x + 4 + j, tx(T_FPISTA), NUM, f->w - 6 - j);
+	texto(f->y + 5, f->x + 2, nlv || !f->e[0] ? "" : tx(T_FNADA), NUM, f->w - 4);
+	raya(f->y + 6, f->x, f->w);
+	for (i = 0; i < f->lista && f->top + i < f->n; i++)
+		filavalor(f, i);
+	raya(f->y + f->h - 5, f->x, f->w);
+	opcion(f->y + f->h - 4, f->x, f->w, tx(T_LISTA0 + modlista), f->s == 2 + f->n);
+	opcion(f->y + f->h - 3, f->x, f->w, tx(T_QUITARF), f->s == 3 + f->n);
+	texto(f->y + f->h - 2, f->x + 2, tx(T_FPIE), NUM, f->w - 4);
+	j = ancho(tx(T_FILTRO));
+	vuelca(f->y + 4, f->x + 4 + j + (ancho(f->e) < f->w - 7 - j ? ancho(f->e) : f->w - 7 - j));
+}
+
+static int ratonfiltro(Ventfiltro *f, int col, int *cambio)
+{
+	int y = ry - f->y;
+
+	if (rx <= f->x || rx >= f->x + f->w - 1 || ry <= f->y || ry >= f->y + f->h - 1)
+		return 0;
+	if (y - 1 < 2)
+		return y - 1 ? A_ORDZA : A_ORDAZ;
+	if (y >= 7 && y < 7 + f->lista && f->top + y - 7 < f->n) {
+		f->s = 2 + f->top + y - 7;
+		marca(f->s);
+	} else if (ry == f->y + f->h - 4) {
+		modlista = (modlista + 1) % 3;
+		*cambio = 1;
+	} else if (ry == f->y + f->h - 3) {
+		quitafiltro(col);
+		return -1;
+	}
+	return 1;
+}
+
+static int filtrocol(int col)
+{
+	static Ventfiltro f;
+	char u[8];
+	int k, i, a, l, cambio = 1;
+
+	memset(&f, 0, sizeof f);
+	f.s = 2;
+	f.n = 1;
 	if (activo(col) && hfl[col].txt)
-		snprintf(e, sizeof e, "%s", hfl[col].txt);
+		snprintf(f.e, sizeof f.e, "%s", hfl[col].txt);
 	avisa("%s", tx(T_CONTANDO));
 	pinta();
 	vuelca(-1, -1);
@@ -5421,162 +5728,62 @@ static int filtrocol(int col)
 	for (;;) {
 		if (!cambio || !pendiente()) {
 			if (cambio) {
-				listavals(e);
-				for (mw = 0, i = 0; i < nlv && i < 2000; i++)
-					if ((a = ancho(dv[lv[i]].s)) > mw)
-						mw = a;
+				listavals(f.e);
+				for (f.mw = 0, i = 0; i < nlv && i < 2000; i++)
+					if ((a = ancho(dv[lv[i]].s)) > f.mw)
+						f.mw = a;
 				cambio = 0;
 			}
-			w = mw + 16;
-			if (w < 44)
-				w = 44;
-			if (w > cols - 4)
-				w = cols - 4;
-			x = colx(col);
-			if (x + w > cols - 1)
-				x = cols - 1 - w;
-			y = 4;
-			h = filas - 2 - y;
-			lista = h - base - 5;
-			if (lista < 1)
-				lista = 1;
-			n = nlv + 1;
-			if (s >= 3 + n + 1)
-				s = 3 + n;
-			if (s >= 2 && s - 2 < top)
-				top = s - 2;
-			if (s >= 2 && s - 2 >= top + lista)
-				top = s - 2 - lista + 1;
-			if (s >= 2 + n)
-				top = n > lista ? n - lista : 0;
-			pinta();
-			caja(y, x, h, w, 0);
-			for (i = 0; i < 2; i++) {
-				a = s == i ? INV : NOR;
-				if (a == INV)
-					rellena(y + 1 + i, x + 1, w - 2, " ", INV);
-				texto(y + 1 + i, x + 2, tx(ops2[i]), a, w - 4);
-			}
-			raya(y + 3, x, w);
-			j = texto(y + 4, x + 2, tx(T_FILTRO), MEN, w - 4);
-			texto(y + 4, x + 2 + j, ": ", NOR, 2);
-			rellena(y + 4, x + 4 + j, w - 6 - j, " ", CAM);
-			if (e[0])
-				texto(y + 4, x + 4 + j, e, CAM, w - 6 - j);
-			else
-				texto(y + 4, x + 4 + j, tx(T_FPISTA), NUM, w - 6 - j);
-			texto(y + 5, x + 2, nlv || !e[0] ? "" : tx(T_FNADA), NUM, w - 4);
-			raya(y + 6, x, w);
-			for (i = 0; i < lista && top + i < n; i++) {
-				j = top + i;
-				a = s == 2 + j ? INV : NOR;
-				if (a == INV)
-					rellena(y + base + i, x + 1, w - 2, " ", INV);
-				if (!j) {
-					for (r = 1, k = 0; k < nlv; k++)
-						r &= dv[lv[k]].on;
-					snprintf(c, sizeof c, "[%s] %s", r ? "x" : " ", tx(T_TODOS));
-					for (k = 0, r = 0; k < nlv; k++)
-						r += dv[lv[k]].n;
-					miles(r, b);
-				} else {
-					Val *v = dv + lv[j - 1];
-					snprintf(c, sizeof c, "[%s] %s", v->on ? "x" : " ", v->s[0] ? v->s : tx(T_VACIAS2));
-					miles(v->n, b);
-				}
-				texto(y + base + i, x + 2, c, a == INV ? INV : j && !dv[lv[j - 1]].s[0] ? NUM : NOR, w - 6 - (int)strlen(b));
-				texto(y + base + i, x + w - 2 - (int)strlen(b), b, a == INV ? INV : NUM, strlen(b));
-			}
-			raya(y + h - 5, x, w);
-			a = s == 2 + n ? INV : NOR;
-			if (a == INV)
-				rellena(y + h - 4, x + 1, w - 2, " ", INV);
-			texto(y + h - 4, x + 2, tx(T_LISTA0 + modlista), a, w - 4);
-			a = s == 3 + n ? INV : NOR;
-			if (a == INV)
-				rellena(y + h - 3, x + 1, w - 2, " ", INV);
-			texto(y + h - 3, x + 2, tx(T_QUITARF), a, w - 4);
-			texto(y + h - 2, x + 2, tx(T_FPIE), NUM, w - 4);
-			j = ancho(tx(T_FILTRO));
-			vuelca(y + 4, x + 4 + j + (ancho(e) < w - 7 - j ? ancho(e) : w - 7 - j));
+			pintafiltro(&f, col);
 		}
 		k = tecla(-1);
 		if (k == K_ESC)
 			return 0;
-		if (k == K_ARR && s > 0)
-			s--;
-		else if (k == K_ABA && s < 3 + n)
-			s++;
+		if (k == K_ARR && f.s > 0)
+			f.s--;
+		else if (k == K_ABA && f.s < 3 + f.n)
+			f.s++;
 		else if (k == K_REP)
-			s = s - lista < 0 ? 0 : s - lista;
+			f.s = f.s - f.lista < 0 ? 0 : f.s - f.lista;
 		else if (k == K_AVP)
-			s = s + lista > 3 + n ? 3 + n : s + lista;
-		else if (k == ' ' && s >= 2 && s < 2 + n) {
-			if (s == 2) {
-				for (r = 1, i = 0; i < nlv; i++)
-					r &= dv[lv[i]].on;
-				for (i = 0; i < nlv; i++)
-					dv[lv[i]].on = !r;
-			} else
-				dv[lv[s - 3]].on ^= 1;
-		} else if (k == 127) {
-			for (i = strlen(e); i && (e[i - 1] & 0xC0) == 0x80; i--)
+			f.s = f.s + f.lista > 3 + f.n ? 3 + f.n : f.s + f.lista;
+		else if (k == ' ' && f.s >= 2 && f.s < 2 + f.n)
+			marca(f.s);
+		else if (k == 127) {
+			for (i = strlen(f.e); i && (f.e[i - 1] & 0xC0) == 0x80; i--)
 				;
 			if (i)
-				e[i - 1] = 0;
+				f.e[i - 1] = 0;
 			cambio = 1;
 		} else if (k == 13) {
-			if (s < 2)
-				return s ? A_ORDZA : A_ORDAZ;
-			if (s == 2 + n) {
+			if (f.s < 2)
+				return f.s ? A_ORDZA : A_ORDAZ;
+			if (f.s == 2 + f.n) {
 				modlista = (modlista + 1) % 3;
 				cambio = 1;
 				continue;
 			}
-			if (s == 3 + n) {
-				if (col < hflc)
-					suelta_f(hfl + col);
-				return -1;
-			}
-			aplicafiltro(col, e);
+			if (f.s == 3 + f.n)
+				quitafiltro(col);
+			else
+				aplicafiltro(col, f.e);
 			return -1;
 		} else if (k == K_RATON && !rs && !(rb & ~28)) {
-			if (rx <= x || rx >= x + w - 1 || ry <= y || ry >= y + h - 1)
-				return 0;
-			if (ry - y - 1 < 2)
-				return ry - y - 1 ? A_ORDZA : A_ORDAZ;
-			if (ry >= y + base && ry < y + base + lista && top + ry - y - base < n) {
-				s = 2 + top + ry - y - base;
-				k = ' ';
-				if (s == 2) {
-					for (r = 1, i = 0; i < nlv; i++)
-						r &= dv[lv[i]].on;
-					for (i = 0; i < nlv; i++)
-						dv[lv[i]].on = !r;
-				} else
-					dv[lv[s - 3]].on ^= 1;
-			} else if (ry == y + h - 4) {
-				modlista = (modlista + 1) % 3;
-				cambio = 1;
-			} else if (ry == y + h - 3) {
-				if (col < hflc)
-					suelta_f(hfl + col);
-				return -1;
-			}
+			if ((a = ratonfiltro(&f, col, &cambio)) != 1)
+				return a;
 		} else if (k == K_RATON && !rs && (rb & ~28) == 64)
-			s = s > 2 ? s - 1 : s;
+			f.s = f.s > 2 ? f.s - 1 : f.s;
 		else if (k == K_RATON && !rs && (rb & ~28) == 65)
-			s = s < 2 + n - 1 ? s + 1 : s;
+			f.s = f.s < 2 + f.n - 1 ? f.s + 1 : f.s;
 		else if (k >= 32 && k < K_ESC && k != 127) {
-			char u[8];
-			int l = cod(k, u);
-
-			if ((int)strlen(e) + l < (int)sizeof e - 1) {
-				memcpy(e + strlen(e), u, l);
-				e[strlen(e) + l] = 0;
+			l = cod(k, u);
+			i = strlen(f.e);
+			if (i + l < (int)sizeof f.e - 1) {
+				memcpy(f.e + i, u, l);
+				f.e[i + l] = 0;
 			}
-			if (s > 2)
-				s = 2;
+			if (f.s > 2)
+				f.s = 2;
 			cambio = 1;
 		}
 	}
@@ -6031,11 +6238,22 @@ static void edita(int k)
 		tfix();
 }
 
+static int cifras(const char *s)
+{
+	long v;
+
+	if (!*s || strspn(s, "0123456789") != strlen(s))
+		return -1;
+	v = strtol(s, 0, 10);
+	return v > INT_MAX ? INT_MAX : (int)v;
+}
+
 int main(int argc, char **argv)
 {
 	struct sigaction sa;
-	char *f = 0;
-	int i, k, ms, ya = 0;
+	struct stat st;
+	char *f = 0, *c;
+	int i, k, ms, ya = 0, linea = 0;
 
 	cargaconf();
 	for (i = 1; i < argc; i++) {
@@ -6043,6 +6261,8 @@ int main(int argc, char **argv)
 			ya = 1;
 		else if (!ya && !strcmp(argv[i], "-r"))
 			solo = 1;
+		else if (!ya && argv[i][0] == '+' && cifras(argv[i] + 1) >= 0)
+			linea = cifras(argv[i] + 1);
 		else if (!ya && (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version"))) {
 			puts("isi " VERSION);
 			return 0;
@@ -6076,10 +6296,19 @@ int main(int argc, char **argv)
 	vacio();
 	crudo();
 	tamano();
+	if (f && stat(f, &st) && (c = strrchr(f, ':')) && c > f && cifras(c + 1) >= 0) {
+		linea = cifras(c + 1);
+		*c = 0;
+	}
 	if (f && abre(f) < 0) {
 		normal();
 		fprintf(stderr, "isi: %s\n", tx(T_CANCELADO));
 		return 1;
+	}
+	if (linea > 0 && !hoja) {
+		cy = linea > nl ? nl - 1 : linea - 1;
+		medidas();
+		fy = cy - th / 2 > 0 ? cy - th / 2 : 0;
 	}
 	if (solo)
 		avisa("%s", tx(T_SOLOM));

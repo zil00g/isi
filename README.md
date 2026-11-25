@@ -32,18 +32,18 @@ Descarga el `.deb` de tu equipo desde la página de
 
 | Paquete | Para |
 |---|---|
-| `isi_1.0.2_amd64.deb` | PC y portátiles de 64 bits |
-| `isi_1.0.2_i386.deb` | PC antiguos de 32 bits |
-| `isi_1.0.2_arm64.deb` | Raspberry Pi 3, 4 y 5 con sistema de 64 bits |
-| `isi_1.0.2_armhf.deb` | Raspberry Pi con Raspberry Pi OS de 32 bits |
+| `isi_1.0.3_amd64.deb` | PC y portátiles de 64 bits |
+| `isi_1.0.3_i386.deb` | PC antiguos de 32 bits |
+| `isi_1.0.3_arm64.deb` | Raspberry Pi 3, 4 y 5 con sistema de 64 bits |
+| `isi_1.0.3_armhf.deb` | Raspberry Pi con Raspberry Pi OS de 32 bits |
 
 y, en la carpeta donde lo hayas descargado:
 
 ```sh
-sudo apt install ./isi_1.0.2_amd64.deb
+sudo apt install ./isi_1.0.3_amd64.deb
 ```
 
-También vale `sudo dpkg -i isi_1.0.2_amd64.deb`.
+También vale `sudo dpkg -i isi_1.0.3_amd64.deb`.
 
 En la página de cada versión están las sumas SHA-256 de todos los
 ficheros. Para comprobar que el que has bajado está bien, descarga
@@ -87,6 +87,8 @@ tengas): `sudo update-alternatives --config editor` para elegirlo.
 ```sh
 isi fichero.txt
 isi -r /etc/fstab    # solo lectura
+isi +120 informe.txt # empieza en la línea 120
+isi informe.txt:120  # lo mismo, tal cual lo da grep -n
 ```
 
 ![Menú Tabla](capturas/02-menus.png)
@@ -112,6 +114,25 @@ Ctrl+H (o F1) enseña todos los atajos y F10 abre los menús. Los más usados:
 
 Los avisos salen en una fila abajo que desaparece sola al minuto, con
 doble clic o con Esc.
+
+Si mientras lo tienes abierto alguien cambia el fichero, otro programa o
+un compañero por SSH, al guardar isi te pregunta antes de pisarlo.
+
+### Buscar con expresiones regulares
+
+En Ctrl+F y Ctrl+R puedes usar expresiones regulares. Las pones entre
+barras y tienen que llevar alguno de estos caracteres:
+`[ ] ( ) * + ? { } | ^ $ \`. No distingue mayúsculas. Unos ejemplos:
+
+```
+/[0-9a-f]{64}/                    hashes SHA-256
+/([0-9]{1,3}\.){3}[0-9]{1,3}/     direcciones IPv4
+/^2026-11-0[1-7]/                 líneas de la primera semana
+```
+
+Si no lleva ninguno de esos caracteres se busca tal cual, como siempre.
+Así una ruta como `/tmp/` o `/home/ana/.config/` se busca y se reemplaza
+como texto normal.
 
 ### Copiar y pegar
 

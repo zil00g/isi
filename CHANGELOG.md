@@ -1,5 +1,33 @@
 # Cambios
 
+## 1.0.3 (25-11-2026)
+
+- Si alguien cambia el fichero mientras lo tienes abierto, al guardar
+  isi te pregunta antes de pisarlo. Como hace nano.
+- `isi +120 fichero` abre directamente en la línea 120. También vale
+  `isi fichero:120`, que es como lo saca `grep -n`, así que lo copias y
+  lo pegas.
+- Se puede buscar y reemplazar con expresiones regulares. Lo pones entre
+  barras, por ejemplo `/[0-9a-f]{64}/` para sacar hashes. Si entre las
+  barras no hay ningún carácter de expresión se busca el texto tal cual,
+  así que las rutas como `/tmp/` funcionan igual que siempre.
+- Arreglado el filtro de columnas del CSV: si escribías una ñ o una
+  letra con tilde y la borrabas, se quedaba medio carácter escondido y
+  ya no encontraba nada.
+- Arreglado el explorador de ficheros: si tecleabas rápido la inicial de
+  una carpeta y luego la de un fichero de dentro, juntaba las dos letras
+  y no lo encontraba.
+- Desactivar IOCs en un texto grande va más rápido. Con un timeline de
+  46 MB y 200.000 líneas pasa de 3,4 a 2,6 segundos.
+- Importar un CSV grande como tabla gasta menos memoria. Con ese mismo
+  timeline baja de 367 a 322 MB.
+- Más pruebas. Un fichero cifrado con un solo byte cambiado o cortado no
+  se abre, lo pruebo de 13 formas distintas. Un binario se guarda sin
+  tocar ni un byte. Y una ruta entre barras nunca se toma por expresión.
+- Por dentro he partido el explorador de ficheros y el filtro de
+  columnas en funciones más pequeñas. Hacen exactamente lo mismo, pero
+  se leen mejor.
+
 ## 1.0.2 (25-11-2026)
 
 - CSV: «256.1.1.1», «1.2.3», «.5» o «5.» ya no cuentan como números al

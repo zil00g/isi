@@ -1,9 +1,10 @@
-.TH ISI 1 "November 2026" "isi 1.0.2" "isi manual"
+.TH ISI 1 "November 2026" "isi 1.0.3" "isi manual"
 .SH NAME
 isi \- text editor for the terminal
 .SH SYNOPSIS
 .B isi
 .RB [ \-r ]
+.RB [ + \fIN\fP ]
 .RI [ file ]
 .SH DESCRIPTION
 .B isi
@@ -20,10 +21,22 @@ If the file does not exist, it is created when saved. If it was
 encrypted with
 .BR isi ,
 the password is asked for when it is opened.
+.PP
+If the file changed on disk since it was opened or last saved,
+.B isi
+asks before overwriting it.
 .SH OPTIONS
 .TP
 .B \-r
 Open the file read\-only.
+.TP
+.BI + N
+Start at line
+.IR N .
+.IB file : N
+does the same, so the output of
+.B grep \-n
+can be pasted as is.
 .TP
 .BR \-h ", " \-\-help
 Show the help and exit.
@@ -61,7 +74,12 @@ Remove the empty lines of the selection or, with no selection, of the
 whole text.
 .TP
 .B Ctrl+F, F3, Shift+F3
-Search, next and previous. The search is not case sensitive.
+Search, next and previous. The search is not case sensitive. Text
+between slashes that has a regular expression character, like
+.BR /[0\-9a\-f]{64}/ ,
+is searched as a POSIX extended regular expression. A path like
+.B /tmp/
+is searched as plain text.
 .TP
 .B Ctrl+R
 Search and replace.

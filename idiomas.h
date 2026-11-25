@@ -31,6 +31,7 @@ enum {
 	T_PEGAFUERA, T_H_PEGAR,
 	T_ABRIRCSV, T_T_ABRIRCSV, T_ORDAZ, T_ORDZA, T_ORDENADAZ, T_ORDENADZA, T_POCASFILAS, T_SOLOHOJA, T_NOHOJA, T_HOJAFILAS, T_IRAFILA, T_H_HOJA, T_H_COLUMNA,
 	T_FILTRAR, T_SINFILTROS, T_CONTANDO, T_FILTRO, T_FPISTA, T_FNADA, T_TODOS, T_VACIAS2, T_LISTA0, T_LISTA1, T_LISTA2, T_QUITARF, T_FPIE, T_FILTRADAS, T_FILTROSQ,
+	T_TOCADO,
 	T_FIN
 };
 
@@ -67,7 +68,7 @@ static const char *const l_es[T_FIN] = {
 	[T_H_AYUDA] = "Esta lista de atajos",
 	[T_DESC] = "Editor de texto para la terminal", [T_LICENCIA] = "Licencia GNU GPL versión 3 o posterior.",
 	[T_CIFRADO] = "Cifrado: XChaCha20-Poly1305 y Argon2id", [T_MONO] = "(Monocypher, de Loup Vaillant y otros)",
-	[T_USO] = "Uso: isi [-r] [fichero]\n\n  -r   abrir en modo solo lectura\n  -h   mostrar esta ayuda\n"
+	[T_USO] = "Uso: isi [-r] [+N] [fichero]\n\n  -r   abrir en modo solo lectura\n  +N   abrir en la línea N (o fichero:N)\n  -h   mostrar esta ayuda\n"
 		"  -v   mostrar la versión\n\nDentro del editor, Ctrl+H muestra los atajos y F10 abre los menús.\n",
 	[T_OPCION] = "opción desconocida: %s", [T_UNO] = "solo se puede abrir un fichero a la vez",
 	[T_TERMINAL] = "hace falta una terminal", [T_CANCELADO] = "cancelado", [T_SINMEM] = "no queda memoria",
@@ -89,6 +90,7 @@ static const char *const l_es[T_FIN] = {
 	[T_PIE_COMO] = "Tab: lista o nombre · Enter: aceptar · ⌫: subir · Esc: cancelar",
 	[T_PIE_ABRIR] = "Enter: abrir · ⌫: subir de carpeta · Esc: cancelar",
 	[T_EXISTE] = "«%s» ya existe. ¿Reemplazarlo?", [T_NOENTRA] = "No se puede entrar en %s",
+	[T_TOCADO] = "«%s» ha cambiado en el disco. ¿Guardar igualmente?",
 	[T_T_ABRIR] = "Abrir", [T_T_COMO] = "Guardar como", [T_T_CSV] = "Convertir CSV en tabla",
 	[T_SI] = "Sí", [T_NO] = "No", [T_CANCELAR] = "Cancelar", [T_TODAS] = "Todas",
 	[T_CAMBIOS] = "Hay cambios sin guardar. ¿Guardarlos?", [T_NUEVAPASS] = "Nueva contraseña",
@@ -148,7 +150,7 @@ static const char *const l_en_us[T_FIN] = {
 	[T_DESC] = "Text editor for the terminal", [T_LICENCIA] = "License: GNU GPL version 3 or later.",
 	[T_CIFRADO] = "Encryption: XChaCha20-Poly1305 and Argon2id",
 	[T_MONO] = "(Monocypher, by Loup Vaillant and others)",
-	[T_USO] = "Usage: isi [-r] [file]\n\n  -r   open read-only\n  -h   show this help\n  -v   show the version\n\n"
+	[T_USO] = "Usage: isi [-r] [+N] [file]\n\n  -r   open read-only\n  +N   start at line N (or file:N)\n  -h   show this help\n  -v   show the version\n\n"
 		"Inside the editor, Ctrl+H shows the shortcuts and F10 opens the menus.\n",
 	[T_OPCION] = "unknown option: %s", [T_UNO] = "only one file can be opened at a time",
 	[T_TERMINAL] = "a terminal is required", [T_CANCELADO] = "canceled", [T_SINMEM] = "out of memory",
@@ -170,6 +172,7 @@ static const char *const l_en_us[T_FIN] = {
 	[T_PIE_COMO] = "Tab: list or name · Enter: accept · ⌫: up · Esc: cancel",
 	[T_PIE_ABRIR] = "Enter: open · ⌫: parent folder · Esc: cancel",
 	[T_EXISTE] = "“%s” already exists. Replace it?", [T_NOENTRA] = "Cannot enter %s",
+	[T_TOCADO] = "“%s” has changed on disk. Save anyway?",
 	[T_T_ABRIR] = "Open", [T_T_COMO] = "Save as", [T_T_CSV] = "Convert CSV to table",
 	[T_SI] = "Yes", [T_NO] = "No", [T_CANCELAR] = "Cancel", [T_TODAS] = "All",
 	[T_CAMBIOS] = "There are unsaved changes. Save them?", [T_NUEVAPASS] = "New password",
@@ -199,6 +202,7 @@ static const char *const l_en_us[T_FIN] = {
 static const char *const l_en_gb[T_FIN] = {
 	[T_CANCELADO] = "cancelled", [T_LICENCIA] = "Licence: GNU GPL version 3 or later.",
 	[T_EXISTE] = "‘%s’ already exists. Replace it?", [T_NOENC] = "‘%s’ not found",
+	[T_TOCADO] = "‘%s’ has changed on disk. Save anyway?",
 	[T_CIFRADOACT] = "Encryption is on: it will be applied when you save",
 	[T_SINTABLA] = "Create a table first (Table, Insert table) or put the cursor inside one",
 };
@@ -230,7 +234,7 @@ static const char *const l_zh[T_FIN] = {
 	[T_H_AYUDA] = "本快捷键列表",
 	[T_DESC] = "终端文本编辑器", [T_LICENCIA] = "许可证：GNU GPL 第 3 版或更高版本。",
 	[T_CIFRADO] = "加密：XChaCha20-Poly1305 与 Argon2id", [T_MONO] = "（Monocypher，作者 Loup Vaillant 等）",
-	[T_USO] = "用法：isi [-r] [文件]\n\n  -r   以只读方式打开\n  -h   显示此帮助\n  -v   显示版本\n\n"
+	[T_USO] = "用法：isi [-r] [+N] [文件]\n\n  -r   以只读方式打开\n  +N   从第 N 行开始（或 文件:N）\n  -h   显示此帮助\n  -v   显示版本\n\n"
 		"在编辑器中，Ctrl+H 显示快捷键，F10 打开菜单。\n",
 	[T_OPCION] = "未知选项：%s", [T_UNO] = "一次只能打开一个文件", [T_TERMINAL] = "需要在终端中运行",
 	[T_CANCELADO] = "已取消", [T_SINMEM] = "内存不足", [T_CONFTERM] = "无法配置终端",
@@ -248,6 +252,7 @@ static const char *const l_zh[T_FIN] = {
 	[T_PIE_COMO] = "Tab：列表或名称 · Enter：确定 · ⌫：上一级 · Esc：取消",
 	[T_PIE_ABRIR] = "Enter：打开 · ⌫：上一级文件夹 · Esc：取消",
 	[T_EXISTE] = "“%s”已存在。要替换吗？", [T_NOENTRA] = "无法进入 %s",
+	[T_TOCADO] = "“%s”已在磁盘上被修改。仍要保存吗？",
 	[T_T_ABRIR] = "打开", [T_T_COMO] = "另存为", [T_T_CSV] = "将 CSV 转换为表格",
 	[T_SI] = "是", [T_NO] = "否", [T_CANCELAR] = "取消", [T_TODAS] = "全部",
 	[T_CAMBIOS] = "有未保存的更改。要保存吗？", [T_NUEVAPASS] = "新密码", [T_REPITE] = "再次输入密码",
@@ -300,7 +305,7 @@ static const char *const l_hi[T_FIN] = {
 	[T_H_DOBLE] = "संदेश पट्टी बंद करें", [T_H_TERMINAL] = "टर्मिनल की तरह चुनें", [T_H_AYUDA] = "शॉर्टकट की यह सूची",
 	[T_DESC] = "टर्मिनल के लिए टेक्स्ट एडिटर", [T_LICENCIA] = "लाइसेंस: GNU GPL संस्करण 3 या बाद का।",
 	[T_CIFRADO] = "एन्क्रिप्शन: XChaCha20-Poly1305 और Argon2id", [T_MONO] = "(Monocypher, Loup Vaillant और अन्य द्वारा)",
-	[T_USO] = "उपयोग: isi [-r] [फ़ाइल]\n\n  -r   केवल पढ़ने के लिए खोलें\n  -h   यह सहायता दिखाएँ\n"
+	[T_USO] = "उपयोग: isi [-r] [+N] [फ़ाइल]\n\n  -r   केवल पढ़ने के लिए खोलें\n  +N   लाइन N से शुरू करें (या फ़ाइल:N)\n  -h   यह सहायता दिखाएँ\n"
 		"  -v   संस्करण दिखाएँ\n\nएडिटर में Ctrl+H शॉर्टकट दिखाता है और F10 मेनू खोलता है।\n",
 	[T_OPCION] = "अज्ञात विकल्प: %s", [T_UNO] = "एक बार में केवल एक फ़ाइल खोली जा सकती है",
 	[T_TERMINAL] = "टर्मिनल आवश्यक है", [T_CANCELADO] = "रद्द किया गया", [T_SINMEM] = "मेमोरी खत्म हो गई",
@@ -321,6 +326,7 @@ static const char *const l_hi[T_FIN] = {
 	[T_PIE_COMO] = "Tab: सूची या नाम · Enter: ठीक · ⌫: ऊपर · Esc: रद्द",
 	[T_PIE_ABRIR] = "Enter: खोलें · ⌫: ऊपर वाला फ़ोल्डर · Esc: रद्द",
 	[T_EXISTE] = "“%s” पहले से मौजूद है। बदलें?", [T_NOENTRA] = "%s में नहीं जा सके",
+	[T_TOCADO] = "“%s” डिस्क पर बदल गई है। फिर भी सहेजें?",
 	[T_T_ABRIR] = "खोलें", [T_T_COMO] = "इस रूप में सहेजें", [T_T_CSV] = "CSV को तालिका में बदलें",
 	[T_SI] = "हाँ", [T_NO] = "नहीं", [T_CANCELAR] = "रद्द करें", [T_TODAS] = "सभी",
 	[T_CAMBIOS] = "कुछ बदलाव सहेजे नहीं गए हैं। सहेजें?", [T_NUEVAPASS] = "नया पासवर्ड",
@@ -375,7 +381,7 @@ static const char *const l_ar[T_FIN] = {
 	[T_H_DOBLE] = "إغلاق شريط الرسائل", [T_H_TERMINAL] = "التحديد كما في الطرفية", [T_H_AYUDA] = "قائمة الاختصارات هذه",
 	[T_DESC] = "محرر نصوص للطرفية", [T_LICENCIA] = "الترخيص: GNU GPL الإصدار 3 أو أحدث.",
 	[T_CIFRADO] = "التشفير: XChaCha20-Poly1305 و Argon2id", [T_MONO] = "(Monocypher، من تأليف Loup Vaillant وآخرين)",
-	[T_USO] = "الاستخدام: isi [-r] [ملف]\n\n  -r   فتح للقراءة فقط\n  -h   عرض هذه المساعدة\n"
+	[T_USO] = "الاستخدام: isi [-r] [+N] [ملف]\n\n  -r   فتح للقراءة فقط\n  +N   البدء من السطر N (أو ملف:N)\n  -h   عرض هذه المساعدة\n"
 		"  -v   عرض الإصدار\n\nداخل المحرر، يعرض Ctrl+H الاختصارات ويفتح F10 القوائم.\n",
 	[T_OPCION] = "خيار غير معروف: %s", [T_UNO] = "لا يمكن فتح أكثر من ملف واحد في المرة",
 	[T_TERMINAL] = "يلزم وجود طرفية", [T_CANCELADO] = "أُلغي", [T_SINMEM] = "نفدت الذاكرة",
@@ -395,6 +401,7 @@ static const char *const l_ar[T_FIN] = {
 	[T_PIE_COMO] = "Tab: القائمة أو الاسم · Enter: موافق · ⌫: للأعلى · Esc: إلغاء",
 	[T_PIE_ABRIR] = "Enter: فتح · ⌫: المجلد الأعلى · Esc: إلغاء",
 	[T_EXISTE] = "«%s» موجود بالفعل. هل تريد استبداله؟", [T_NOENTRA] = "تعذر الدخول إلى %s",
+	[T_TOCADO] = "تغيّر «%s» على القرص. هل تريد الحفظ على أي حال؟",
 	[T_T_ABRIR] = "فتح", [T_T_COMO] = "حفظ باسم", [T_T_CSV] = "تحويل CSV إلى جدول",
 	[T_SI] = "نعم", [T_NO] = "لا", [T_CANCELAR] = "إلغاء", [T_TODAS] = "الكل",
 	[T_CAMBIOS] = "توجد تغييرات غير محفوظة. هل تريد حفظها؟", [T_NUEVAPASS] = "كلمة مرور جديدة",
@@ -451,7 +458,7 @@ static const char *const l_fr[T_FIN] = {
 	[T_H_TERMINAL] = "Sélectionner comme dans le terminal", [T_H_AYUDA] = "Cette liste de raccourcis",
 	[T_DESC] = "Éditeur de texte pour le terminal", [T_LICENCIA] = "Licence GNU GPL version 3 ou ultérieure.",
 	[T_CIFRADO] = "Chiffrement : XChaCha20-Poly1305 et Argon2id", [T_MONO] = "(Monocypher, de Loup Vaillant et d’autres)",
-	[T_USO] = "Usage : isi [-r] [fichier]\n\n  -r   ouvrir en lecture seule\n  -h   afficher cette aide\n"
+	[T_USO] = "Usage : isi [-r] [+N] [fichier]\n\n  -r   ouvrir en lecture seule\n  +N   commencer à la ligne N (ou fichier:N)\n  -h   afficher cette aide\n"
 		"  -v   afficher la version\n\nDans l’éditeur, Ctrl+H affiche les raccourcis et F10 ouvre les menus.\n",
 	[T_OPCION] = "option inconnue : %s", [T_UNO] = "un seul fichier peut être ouvert à la fois",
 	[T_TERMINAL] = "un terminal est nécessaire", [T_CANCELADO] = "annulé", [T_SINMEM] = "mémoire épuisée",
@@ -474,6 +481,7 @@ static const char *const l_fr[T_FIN] = {
 	[T_PIE_COMO] = "Tab : liste ou nom · Entrée : valider · ⌫ : remonter · Échap : annuler",
 	[T_PIE_ABRIR] = "Entrée : ouvrir · ⌫ : dossier parent · Échap : annuler",
 	[T_EXISTE] = "« %s » existe déjà. Le remplacer ?", [T_NOENTRA] = "Impossible d’entrer dans %s",
+	[T_TOCADO] = "« %s » a changé sur le disque. Enregistrer quand même ?",
 	[T_T_ABRIR] = "Ouvrir", [T_T_COMO] = "Enregistrer sous", [T_T_CSV] = "Convertir un CSV en tableau",
 	[T_SI] = "Oui", [T_NO] = "Non", [T_CANCELAR] = "Annuler", [T_TODAS] = "Toutes",
 	[T_CAMBIOS] = "Des modifications ne sont pas enregistrées. Les enregistrer ?",
@@ -533,7 +541,7 @@ static const char *const l_pt[T_FIN] = {
 	[T_H_AYUDA] = "Esta lista de atalhos",
 	[T_DESC] = "Editor de texto para o terminal", [T_LICENCIA] = "Licença GNU GPL versão 3 ou posterior.",
 	[T_CIFRADO] = "Criptografia: XChaCha20-Poly1305 e Argon2id", [T_MONO] = "(Monocypher, de Loup Vaillant e outros)",
-	[T_USO] = "Uso: isi [-r] [arquivo]\n\n  -r   abrir somente para leitura\n  -h   mostrar esta ajuda\n"
+	[T_USO] = "Uso: isi [-r] [+N] [arquivo]\n\n  -r   abrir somente para leitura\n  +N   começar na linha N (ou arquivo:N)\n  -h   mostrar esta ajuda\n"
 		"  -v   mostrar a versão\n\nDentro do editor, Ctrl+H mostra os atalhos e F10 abre os menus.\n",
 	[T_OPCION] = "opção desconhecida: %s", [T_UNO] = "só é possível abrir um arquivo por vez",
 	[T_TERMINAL] = "é preciso um terminal", [T_CANCELADO] = "cancelado", [T_SINMEM] = "memória esgotada",
@@ -554,6 +562,7 @@ static const char *const l_pt[T_FIN] = {
 	[T_PIE_COMO] = "Tab: lista ou nome · Enter: aceitar · ⌫: subir · Esc: cancelar",
 	[T_PIE_ABRIR] = "Enter: abrir · ⌫: pasta acima · Esc: cancelar",
 	[T_EXISTE] = "“%s” já existe. Substituir?", [T_NOENTRA] = "Não foi possível entrar em %s",
+	[T_TOCADO] = "“%s” foi alterado no disco. Salvar mesmo assim?",
 	[T_T_ABRIR] = "Abrir", [T_T_COMO] = "Salvar como", [T_T_CSV] = "Converter CSV em tabela",
 	[T_SI] = "Sim", [T_NO] = "Não", [T_CANCELAR] = "Cancelar", [T_TODAS] = "Todas",
 	[T_CAMBIOS] = "Há alterações não salvas. Salvar?", [T_NUEVAPASS] = "Nova senha", [T_REPITE] = "Repita a senha",
@@ -611,7 +620,7 @@ static const char *const l_ru[T_FIN] = {
 	[T_H_AYUDA] = "Этот список сочетаний",
 	[T_DESC] = "Текстовый редактор для терминала", [T_LICENCIA] = "Лицензия GNU GPL версии 3 или более поздней.",
 	[T_CIFRADO] = "Шифрование: XChaCha20-Poly1305 и Argon2id", [T_MONO] = "(Monocypher, автор Loup Vaillant и другие)",
-	[T_USO] = "Использование: isi [-r] [файл]\n\n  -r   открыть только для чтения\n  -h   показать эту справку\n"
+	[T_USO] = "Использование: isi [-r] [+N] [файл]\n\n  -r   открыть только для чтения\n  +N   начать со строки N (или файл:N)\n  -h   показать эту справку\n"
 		"  -v   показать версию\n\nВ редакторе Ctrl+H показывает сочетания клавиш, а F10 открывает меню.\n",
 	[T_OPCION] = "неизвестный параметр: %s", [T_UNO] = "можно открыть только один файл",
 	[T_TERMINAL] = "нужен терминал", [T_CANCELADO] = "отменено", [T_SINMEM] = "недостаточно памяти",
@@ -632,6 +641,7 @@ static const char *const l_ru[T_FIN] = {
 	[T_PIE_COMO] = "Tab: список или имя · Enter: принять · ⌫: вверх · Esc: отмена",
 	[T_PIE_ABRIR] = "Enter: открыть · ⌫: на уровень вверх · Esc: отмена",
 	[T_EXISTE] = "«%s» уже существует. Заменить?", [T_NOENTRA] = "Не удалось открыть папку %s",
+	[T_TOCADO] = "«%s» изменён на диске. Всё равно сохранить?",
 	[T_T_ABRIR] = "Открыть", [T_T_COMO] = "Сохранить как", [T_T_CSV] = "Преобразовать CSV в таблицу",
 	[T_SI] = "Да", [T_NO] = "Нет", [T_CANCELAR] = "Отмена", [T_TODAS] = "Все",
 	[T_CAMBIOS] = "Есть несохранённые изменения. Сохранить?", [T_NUEVAPASS] = "Новый пароль",
@@ -684,7 +694,7 @@ static const char *const l_id[T_FIN] = {
 	[T_H_DOBLE] = "Tutup bilah pesan", [T_H_TERMINAL] = "Pilih seperti di terminal", [T_H_AYUDA] = "Daftar pintasan ini",
 	[T_DESC] = "Penyunting teks untuk terminal", [T_LICENCIA] = "Lisensi GNU GPL versi 3 atau lebih baru.",
 	[T_CIFRADO] = "Enkripsi: XChaCha20-Poly1305 dan Argon2id", [T_MONO] = "(Monocypher, oleh Loup Vaillant dan lainnya)",
-	[T_USO] = "Penggunaan: isi [-r] [berkas]\n\n  -r   buka hanya-baca\n  -h   tampilkan bantuan ini\n"
+	[T_USO] = "Penggunaan: isi [-r] [+N] [berkas]\n\n  -r   buka hanya-baca\n  +N   mulai di baris N (atau berkas:N)\n  -h   tampilkan bantuan ini\n"
 		"  -v   tampilkan versi\n\nDi dalam penyunting, Ctrl+H menampilkan pintasan dan F10 membuka menu.\n",
 	[T_OPCION] = "opsi tidak dikenal: %s", [T_UNO] = "hanya satu berkas yang bisa dibuka sekaligus",
 	[T_TERMINAL] = "diperlukan terminal", [T_CANCELADO] = "dibatalkan", [T_SINMEM] = "memori habis",
@@ -705,6 +715,7 @@ static const char *const l_id[T_FIN] = {
 	[T_PIE_COMO] = "Tab: daftar atau nama · Enter: terima · ⌫: naik · Esc: batal",
 	[T_PIE_ABRIR] = "Enter: buka · ⌫: folder induk · Esc: batal",
 	[T_EXISTE] = "“%s” sudah ada. Ganti?", [T_NOENTRA] = "Tidak dapat masuk ke %s",
+	[T_TOCADO] = "“%s” sudah berubah di disk. Tetap simpan?",
 	[T_T_ABRIR] = "Buka", [T_T_COMO] = "Simpan sebagai", [T_T_CSV] = "Ubah CSV menjadi tabel",
 	[T_SI] = "Ya", [T_NO] = "Tidak", [T_CANCELAR] = "Batal", [T_TODAS] = "Semua",
 	[T_CAMBIOS] = "Ada perubahan yang belum disimpan. Simpan?", [T_NUEVAPASS] = "Kata sandi baru",
@@ -760,7 +771,7 @@ static const char *const l_de[T_FIN] = {
 	[T_H_AYUDA] = "Diese Liste der Tastenkürzel",
 	[T_DESC] = "Texteditor für das Terminal", [T_LICENCIA] = "Lizenz: GNU GPL Version 3 oder neuer.",
 	[T_CIFRADO] = "Verschlüsselung: XChaCha20-Poly1305 und Argon2id", [T_MONO] = "(Monocypher, von Loup Vaillant und anderen)",
-	[T_USO] = "Aufruf: isi [-r] [Datei]\n\n  -r   schreibgeschützt öffnen\n  -h   diese Hilfe anzeigen\n"
+	[T_USO] = "Aufruf: isi [-r] [+N] [Datei]\n\n  -r   schreibgeschützt öffnen\n  +N   in Zeile N beginnen (oder Datei:N)\n  -h   diese Hilfe anzeigen\n"
 		"  -v   Version anzeigen\n\nIm Editor zeigt Ctrl+H die Tastenkürzel, F10 öffnet die Menüs.\n",
 	[T_OPCION] = "unbekannte Option: %s", [T_UNO] = "es kann nur eine Datei gleichzeitig geöffnet werden",
 	[T_TERMINAL] = "ein Terminal ist erforderlich", [T_CANCELADO] = "abgebrochen", [T_SINMEM] = "kein Speicher mehr",
@@ -782,6 +793,7 @@ static const char *const l_de[T_FIN] = {
 	[T_PIE_COMO] = "Tab: Liste oder Name · Enter: übernehmen · ⌫: nach oben · Esc: abbrechen",
 	[T_PIE_ABRIR] = "Enter: öffnen · ⌫: übergeordneter Ordner · Esc: abbrechen",
 	[T_EXISTE] = "„%s“ existiert bereits. Ersetzen?", [T_NOENTRA] = "%s kann nicht geöffnet werden",
+	[T_TOCADO] = "„%s“ wurde auf der Festplatte geändert. Trotzdem speichern?",
 	[T_T_ABRIR] = "Öffnen", [T_T_COMO] = "Speichern unter", [T_T_CSV] = "CSV in Tabelle umwandeln",
 	[T_SI] = "Ja", [T_NO] = "Nein", [T_CANCELAR] = "Abbrechen", [T_TODAS] = "Alle",
 	[T_CAMBIOS] = "Es gibt ungespeicherte Änderungen. Speichern?", [T_NUEVAPASS] = "Neues Passwort",
@@ -835,7 +847,7 @@ static const char *const l_ja[T_FIN] = {
 	[T_H_AYUDA] = "このショートカット一覧",
 	[T_DESC] = "ターミナル用テキストエディター", [T_LICENCIA] = "ライセンス：GNU GPL バージョン 3 以降。",
 	[T_CIFRADO] = "暗号化：XChaCha20-Poly1305 と Argon2id", [T_MONO] = "（Monocypher、作者 Loup Vaillant ほか）",
-	[T_USO] = "使い方: isi [-r] [ファイル]\n\n  -r   読み取り専用で開く\n  -h   このヘルプを表示\n"
+	[T_USO] = "使い方: isi [-r] [+N] [ファイル]\n\n  -r   読み取り専用で開く\n  +N   N 行目から開く（または ファイル:N）\n  -h   このヘルプを表示\n"
 		"  -v   バージョンを表示\n\nエディターでは Ctrl+H でショートカット一覧、F10 でメニューを開きます。\n",
 	[T_OPCION] = "不明なオプション：%s", [T_UNO] = "一度に開けるファイルは 1 つだけです",
 	[T_TERMINAL] = "ターミナルが必要です", [T_CANCELADO] = "キャンセルしました", [T_SINMEM] = "メモリが足りません",
@@ -856,6 +868,7 @@ static const char *const l_ja[T_FIN] = {
 	[T_PIE_COMO] = "Tab：一覧／名前 · Enter：決定 · ⌫：上へ · Esc：キャンセル",
 	[T_PIE_ABRIR] = "Enter：開く · ⌫：親フォルダー · Esc：キャンセル",
 	[T_EXISTE] = "「%s」は既に存在します。置き換えますか？", [T_NOENTRA] = "%s に入れません",
+	[T_TOCADO] = "「%s」はディスク上で変更されています。それでも保存しますか？",
 	[T_T_ABRIR] = "開く", [T_T_COMO] = "名前を付けて保存", [T_T_CSV] = "CSV を表に変換",
 	[T_SI] = "はい", [T_NO] = "いいえ", [T_CANCELAR] = "キャンセル", [T_TODAS] = "すべて",
 	[T_CAMBIOS] = "保存していない変更があります。保存しますか？", [T_NUEVAPASS] = "新しいパスワード",
@@ -908,7 +921,7 @@ static const char *const l_tr[T_FIN] = {
 	[T_H_DOBLE] = "İleti çubuğunu kapat", [T_H_TERMINAL] = "Terminaldeki gibi seç", [T_H_AYUDA] = "Bu kısayol listesi",
 	[T_DESC] = "Terminal için metin düzenleyici", [T_LICENCIA] = "Lisans: GNU GPL sürüm 3 veya sonrası.",
 	[T_CIFRADO] = "Şifreleme: XChaCha20-Poly1305 ve Argon2id", [T_MONO] = "(Monocypher, Loup Vaillant ve diğerleri)",
-	[T_USO] = "Kullanım: isi [-r] [dosya]\n\n  -r   salt okunur aç\n  -h   bu yardımı göster\n  -v   sürümü göster\n\n"
+	[T_USO] = "Kullanım: isi [-r] [+N] [dosya]\n\n  -r   salt okunur aç\n  +N   N. satırdan başla (ya da dosya:N)\n  -h   bu yardımı göster\n  -v   sürümü göster\n\n"
 		"Düzenleyicide Ctrl+H kısayolları gösterir, F10 menüleri açar.\n",
 	[T_OPCION] = "bilinmeyen seçenek: %s", [T_UNO] = "aynı anda yalnızca bir dosya açılabilir",
 	[T_TERMINAL] = "bir terminal gerekli", [T_CANCELADO] = "iptal edildi", [T_SINMEM] = "bellek yetersiz",
@@ -928,6 +941,7 @@ static const char *const l_tr[T_FIN] = {
 	[T_PIE_COMO] = "Tab: liste veya ad · Enter: tamam · ⌫: yukarı · Esc: iptal",
 	[T_PIE_ABRIR] = "Enter: aç · ⌫: üst klasör · Esc: iptal",
 	[T_EXISTE] = "“%s” zaten var. Değiştirilsin mi?", [T_NOENTRA] = "%s klasörüne girilemiyor",
+	[T_TOCADO] = "“%s” diskte değişti. Yine de kaydedilsin mi?",
 	[T_T_ABRIR] = "Aç", [T_T_COMO] = "Farklı kaydet", [T_T_CSV] = "CSV'yi tabloya dönüştür",
 	[T_SI] = "Evet", [T_NO] = "Hayır", [T_CANCELAR] = "İptal", [T_TODAS] = "Tümü",
 	[T_CAMBIOS] = "Kaydedilmemiş değişiklikler var. Kaydedilsin mi?", [T_NUEVAPASS] = "Yeni parola",
@@ -979,7 +993,7 @@ static const char *const l_vi[T_FIN] = {
 	[T_H_DOBLE] = "Đóng thanh thông báo", [T_H_TERMINAL] = "Chọn như trong terminal", [T_H_AYUDA] = "Danh sách phím tắt này",
 	[T_DESC] = "Trình soạn thảo văn bản cho terminal", [T_LICENCIA] = "Giấy phép GNU GPL phiên bản 3 trở lên.",
 	[T_CIFRADO] = "Mã hóa: XChaCha20-Poly1305 và Argon2id", [T_MONO] = "(Monocypher, của Loup Vaillant và những người khác)",
-	[T_USO] = "Cách dùng: isi [-r] [tệp]\n\n  -r   mở ở chế độ chỉ đọc\n  -h   hiện trợ giúp này\n"
+	[T_USO] = "Cách dùng: isi [-r] [+N] [tệp]\n\n  -r   mở ở chế độ chỉ đọc\n  +N   bắt đầu ở dòng N (hoặc tệp:N)\n  -h   hiện trợ giúp này\n"
 		"  -v   hiện phiên bản\n\nTrong trình soạn thảo, Ctrl+H hiện phím tắt và F10 mở menu.\n",
 	[T_OPCION] = "tùy chọn không rõ: %s", [T_UNO] = "mỗi lần chỉ mở được một tệp", [T_TERMINAL] = "cần có terminal",
 	[T_CANCELADO] = "đã hủy", [T_SINMEM] = "hết bộ nhớ", [T_CONFTERM] = "không thể thiết lập terminal",
@@ -998,6 +1012,7 @@ static const char *const l_vi[T_FIN] = {
 	[T_PIE_COMO] = "Tab: danh sách hoặc tên · Enter: đồng ý · ⌫: lên trên · Esc: hủy",
 	[T_PIE_ABRIR] = "Enter: mở · ⌫: thư mục cha · Esc: hủy",
 	[T_EXISTE] = "“%s” đã tồn tại. Thay thế?", [T_NOENTRA] = "Không thể vào %s",
+	[T_TOCADO] = "“%s” đã thay đổi trên đĩa. Vẫn lưu?",
 	[T_T_ABRIR] = "Mở", [T_T_COMO] = "Lưu thành", [T_T_CSV] = "Chuyển CSV thành bảng",
 	[T_SI] = "Có", [T_NO] = "Không", [T_CANCELAR] = "Hủy", [T_TODAS] = "Tất cả",
 	[T_CAMBIOS] = "Có thay đổi chưa lưu. Lưu lại?", [T_NUEVAPASS] = "Mật khẩu mới", [T_REPITE] = "Nhập lại mật khẩu",
@@ -1048,7 +1063,7 @@ static const char *const l_ko[T_FIN] = {
 	[T_H_AYUDA] = "이 단축키 목록",
 	[T_DESC] = "터미널용 텍스트 편집기", [T_LICENCIA] = "라이선스: GNU GPL 버전 3 이상.",
 	[T_CIFRADO] = "암호화: XChaCha20-Poly1305 및 Argon2id", [T_MONO] = "(Monocypher, Loup Vaillant 외 제작)",
-	[T_USO] = "사용법: isi [-r] [파일]\n\n  -r   읽기 전용으로 열기\n  -h   이 도움말 표시\n  -v   버전 표시\n\n"
+	[T_USO] = "사용법: isi [-r] [+N] [파일]\n\n  -r   읽기 전용으로 열기\n  +N   N번째 줄에서 시작 (또는 파일:N)\n  -h   이 도움말 표시\n  -v   버전 표시\n\n"
 		"편집기에서 Ctrl+H는 단축키 목록을, F10은 메뉴를 엽니다.\n",
 	[T_OPCION] = "알 수 없는 옵션: %s", [T_UNO] = "한 번에 파일 하나만 열 수 있습니다", [T_TERMINAL] = "터미널이 필요합니다",
 	[T_CANCELADO] = "취소됨", [T_SINMEM] = "메모리가 부족합니다", [T_CONFTERM] = "터미널을 설정할 수 없습니다",
@@ -1067,6 +1082,7 @@ static const char *const l_ko[T_FIN] = {
 	[T_PIE_COMO] = "Tab: 목록 또는 이름 · Enter: 확인 · ⌫: 위로 · Esc: 취소",
 	[T_PIE_ABRIR] = "Enter: 열기 · ⌫: 상위 폴더 · Esc: 취소",
 	[T_EXISTE] = "“%s”이(가) 이미 있습니다. 바꿀까요?", [T_NOENTRA] = "%s에 들어갈 수 없습니다",
+	[T_TOCADO] = "“%s”이(가) 디스크에서 바뀌었습니다. 그래도 저장할까요?",
 	[T_T_ABRIR] = "열기", [T_T_COMO] = "다른 이름으로 저장", [T_T_CSV] = "CSV를 표로 변환",
 	[T_SI] = "예", [T_NO] = "아니요", [T_CANCELAR] = "취소", [T_TODAS] = "모두",
 	[T_CAMBIOS] = "저장하지 않은 변경 사항이 있습니다. 저장할까요?", [T_NUEVAPASS] = "새 비밀번호",
@@ -1120,7 +1136,7 @@ static const char *const l_it[T_FIN] = {
 	[T_H_AYUDA] = "Questo elenco di scorciatoie",
 	[T_DESC] = "Editor di testo per il terminale", [T_LICENCIA] = "Licenza GNU GPL versione 3 o successiva.",
 	[T_CIFRADO] = "Cifratura: XChaCha20-Poly1305 e Argon2id", [T_MONO] = "(Monocypher, di Loup Vaillant e altri)",
-	[T_USO] = "Uso: isi [-r] [file]\n\n  -r   apri in sola lettura\n  -h   mostra questo aiuto\n  -v   mostra la versione\n\n"
+	[T_USO] = "Uso: isi [-r] [+N] [file]\n\n  -r   apri in sola lettura\n  +N   iniziare dalla riga N (o file:N)\n  -h   mostra questo aiuto\n  -v   mostra la versione\n\n"
 		"Nell'editor, Ctrl+H mostra le scorciatoie e F10 apre i menu.\n",
 	[T_OPCION] = "opzione sconosciuta: %s", [T_UNO] = "si può aprire un solo file alla volta",
 	[T_TERMINAL] = "serve un terminale", [T_CANCELADO] = "annullato", [T_SINMEM] = "memoria esaurita",
@@ -1141,6 +1157,7 @@ static const char *const l_it[T_FIN] = {
 	[T_PIE_COMO] = "Tab: elenco o nome · Invio: conferma · ⌫: su · Esc: annulla",
 	[T_PIE_ABRIR] = "Invio: apri · ⌫: cartella superiore · Esc: annulla",
 	[T_EXISTE] = "«%s» esiste già. Sostituirlo?", [T_NOENTRA] = "Impossibile entrare in %s",
+	[T_TOCADO] = "«%s» è cambiato sul disco. Salvare comunque?",
 	[T_T_ABRIR] = "Apri", [T_T_COMO] = "Salva con nome", [T_T_CSV] = "Converti CSV in tabella",
 	[T_SI] = "Sì", [T_NO] = "No", [T_CANCELAR] = "Annulla", [T_TODAS] = "Tutte",
 	[T_CAMBIOS] = "Ci sono modifiche non salvate. Salvarle?", [T_NUEVAPASS] = "Nuova password",
@@ -1192,7 +1209,7 @@ static const char *const l_th[T_FIN] = {
 	[T_H_DOBLE] = "ปิดแถบข้อความ", [T_H_TERMINAL] = "เลือกแบบในเทอร์มินัล", [T_H_AYUDA] = "รายการแป้นพิมพ์ลัดนี้",
 	[T_DESC] = "โปรแกรมแก้ไขข้อความสำหรับเทอร์มินัล", [T_LICENCIA] = "สัญญาอนุญาต GNU GPL รุ่น 3 หรือใหม่กว่า",
 	[T_CIFRADO] = "การเข้ารหัส: XChaCha20-Poly1305 และ Argon2id", [T_MONO] = "(Monocypher โดย Loup Vaillant และคนอื่น ๆ)",
-	[T_USO] = "วิธีใช้: isi [-r] [ไฟล์]\n\n  -r   เปิดแบบอ่านอย่างเดียว\n  -h   แสดงความช่วยเหลือนี้\n"
+	[T_USO] = "วิธีใช้: isi [-r] [+N] [ไฟล์]\n\n  -r   เปิดแบบอ่านอย่างเดียว\n  +N   เริ่มที่บรรทัด N (หรือ ไฟล์:N)\n  -h   แสดงความช่วยเหลือนี้\n"
 		"  -v   แสดงรุ่น\n\nในโปรแกรม Ctrl+H แสดงแป้นพิมพ์ลัด และ F10 เปิดเมนู\n",
 	[T_OPCION] = "ตัวเลือกที่ไม่รู้จัก: %s", [T_UNO] = "เปิดได้ครั้งละหนึ่งไฟล์เท่านั้น", [T_TERMINAL] = "ต้องใช้เทอร์มินัล",
 	[T_CANCELADO] = "ยกเลิกแล้ว", [T_SINMEM] = "หน่วยความจำไม่พอ", [T_CONFTERM] = "ตั้งค่าเทอร์มินัลไม่ได้",
@@ -1211,6 +1228,7 @@ static const char *const l_th[T_FIN] = {
 	[T_PIE_COMO] = "Tab: รายการหรือชื่อ · Enter: ตกลง · ⌫: ขึ้น · Esc: ยกเลิก",
 	[T_PIE_ABRIR] = "Enter: เปิด · ⌫: โฟลเดอร์ระดับบน · Esc: ยกเลิก",
 	[T_EXISTE] = "มี “%s” อยู่แล้ว แทนที่หรือไม่", [T_NOENTRA] = "เข้า %s ไม่ได้",
+	[T_TOCADO] = "“%s” ถูกแก้ไขบนดิสก์แล้ว บันทึกต่อหรือไม่",
 	[T_T_ABRIR] = "เปิด", [T_T_COMO] = "บันทึกเป็น", [T_T_CSV] = "แปลง CSV เป็นตาราง",
 	[T_SI] = "ใช่", [T_NO] = "ไม่", [T_CANCELAR] = "ยกเลิก", [T_TODAS] = "ทั้งหมด",
 	[T_CAMBIOS] = "มีการเปลี่ยนแปลงที่ยังไม่บันทึก บันทึกหรือไม่", [T_NUEVAPASS] = "รหัสผ่านใหม่",
@@ -1264,7 +1282,7 @@ static const char *const l_pl[T_FIN] = {
 	[T_H_DOBLE] = "Zamknij pasek komunikatów", [T_H_TERMINAL] = "Zaznaczanie jak w terminalu", [T_H_AYUDA] = "Ta lista skrótów",
 	[T_DESC] = "Edytor tekstu dla terminala", [T_LICENCIA] = "Licencja GNU GPL w wersji 3 lub nowszej.",
 	[T_CIFRADO] = "Szyfrowanie: XChaCha20-Poly1305 i Argon2id", [T_MONO] = "(Monocypher, autorstwa Loup Vaillant i innych)",
-	[T_USO] = "Użycie: isi [-r] [plik]\n\n  -r   otwórz tylko do odczytu\n  -h   pokaż tę pomoc\n  -v   pokaż wersję\n\n"
+	[T_USO] = "Użycie: isi [-r] [+N] [plik]\n\n  -r   otwórz tylko do odczytu\n  +N   zacznij od wiersza N (lub plik:N)\n  -h   pokaż tę pomoc\n  -v   pokaż wersję\n\n"
 		"W edytorze Ctrl+H pokazuje skróty, a F10 otwiera menu.\n",
 	[T_OPCION] = "nieznana opcja: %s", [T_UNO] = "można otworzyć tylko jeden plik naraz",
 	[T_TERMINAL] = "wymagany jest terminal", [T_CANCELADO] = "anulowano", [T_SINMEM] = "brak pamięci",
@@ -1284,6 +1302,7 @@ static const char *const l_pl[T_FIN] = {
 	[T_PIE_COMO] = "Tab: lista lub nazwa · Enter: akceptuj · ⌫: w górę · Esc: anuluj",
 	[T_PIE_ABRIR] = "Enter: otwórz · ⌫: folder nadrzędny · Esc: anuluj",
 	[T_EXISTE] = "„%s” już istnieje. Zastąpić?", [T_NOENTRA] = "Nie można wejść do %s",
+	[T_TOCADO] = "„%s” zmienił się na dysku. Zapisać mimo to?",
 	[T_T_ABRIR] = "Otwórz", [T_T_COMO] = "Zapisz jako", [T_T_CSV] = "Zamień CSV na tabelę",
 	[T_SI] = "Tak", [T_NO] = "Nie", [T_CANCELAR] = "Anuluj", [T_TODAS] = "Wszystkie",
 	[T_CAMBIOS] = "Są niezapisane zmiany. Zapisać je?", [T_NUEVAPASS] = "Nowe hasło", [T_REPITE] = "Powtórz hasło",
@@ -1336,7 +1355,7 @@ static const char *const l_uk[T_FIN] = {
 	[T_H_DOBLE] = "Закрити рядок повідомлень", [T_H_TERMINAL] = "Виділяти як у терміналі", [T_H_AYUDA] = "Цей список скорочень",
 	[T_DESC] = "Текстовий редактор для термінала", [T_LICENCIA] = "Ліцензія GNU GPL версії 3 або новішої.",
 	[T_CIFRADO] = "Шифрування: XChaCha20-Poly1305 та Argon2id", [T_MONO] = "(Monocypher, автор Loup Vaillant та інші)",
-	[T_USO] = "Використання: isi [-r] [файл]\n\n  -r   відкрити лише для читання\n  -h   показати цю довідку\n"
+	[T_USO] = "Використання: isi [-r] [+N] [файл]\n\n  -r   відкрити лише для читання\n  +N   почати з рядка N (або файл:N)\n  -h   показати цю довідку\n"
 		"  -v   показати версію\n\nУ редакторі Ctrl+H показує скорочення, а F10 відкриває меню.\n",
 	[T_OPCION] = "невідомий параметр: %s", [T_UNO] = "можна відкрити лише один файл", [T_TERMINAL] = "потрібен термінал",
 	[T_CANCELADO] = "скасовано", [T_SINMEM] = "бракує пам’яті", [T_CONFTERM] = "не вдалося налаштувати термінал",
@@ -1355,6 +1374,7 @@ static const char *const l_uk[T_FIN] = {
 	[T_PIE_COMO] = "Tab: список або ім’я · Enter: прийняти · ⌫: вгору · Esc: скасувати",
 	[T_PIE_ABRIR] = "Enter: відкрити · ⌫: батьківська тека · Esc: скасувати",
 	[T_EXISTE] = "«%s» уже існує. Замінити?", [T_NOENTRA] = "Не вдалося відкрити теку %s",
+	[T_TOCADO] = "«%s» змінено на диску. Все одно зберегти?",
 	[T_T_ABRIR] = "Відкрити", [T_T_COMO] = "Зберегти як", [T_T_CSV] = "Перетворити CSV на таблицю",
 	[T_SI] = "Так", [T_NO] = "Ні", [T_CANCELAR] = "Скасувати", [T_TODAS] = "Усі",
 	[T_CAMBIOS] = "Є незбережені зміни. Зберегти?", [T_NUEVAPASS] = "Новий пароль", [T_REPITE] = "Повторіть пароль",
@@ -1409,7 +1429,7 @@ static const char *const l_nl[T_FIN] = {
 	[T_H_AYUDA] = "Deze lijst met sneltoetsen",
 	[T_DESC] = "Teksteditor voor de terminal", [T_LICENCIA] = "Licentie: GNU GPL versie 3 of later.",
 	[T_CIFRADO] = "Versleuteling: XChaCha20-Poly1305 en Argon2id", [T_MONO] = "(Monocypher, door Loup Vaillant en anderen)",
-	[T_USO] = "Gebruik: isi [-r] [bestand]\n\n  -r   alleen-lezen openen\n  -h   deze hulp tonen\n  -v   de versie tonen\n\n"
+	[T_USO] = "Gebruik: isi [-r] [+N] [bestand]\n\n  -r   alleen-lezen openen\n  +N   beginnen op regel N (of bestand:N)\n  -h   deze hulp tonen\n  -v   de versie tonen\n\n"
 		"In de editor toont Ctrl+H de sneltoetsen en opent F10 de menu's.\n",
 	[T_OPCION] = "onbekende optie: %s", [T_UNO] = "er kan maar één bestand tegelijk open",
 	[T_TERMINAL] = "er is een terminal nodig", [T_CANCELADO] = "geannuleerd", [T_SINMEM] = "geen geheugen meer",
@@ -1429,6 +1449,7 @@ static const char *const l_nl[T_FIN] = {
 	[T_PIE_COMO] = "Tab: lijst of naam · Enter: accepteren · ⌫: omhoog · Esc: annuleren",
 	[T_PIE_ABRIR] = "Enter: openen · ⌫: bovenliggende map · Esc: annuleren",
 	[T_EXISTE] = "‘%s’ bestaat al. Vervangen?", [T_NOENTRA] = "Kan %s niet openen",
+	[T_TOCADO] = "‘%s’ is op schijf gewijzigd. Toch opslaan?",
 	[T_T_ABRIR] = "Openen", [T_T_COMO] = "Opslaan als", [T_T_CSV] = "CSV omzetten naar tabel",
 	[T_SI] = "Ja", [T_NO] = "Nee", [T_CANCELAR] = "Annuleren", [T_TODAS] = "Alle",
 	[T_CAMBIOS] = "Er zijn niet-opgeslagen wijzigingen. Opslaan?", [T_NUEVAPASS] = "Nieuw wachtwoord",
@@ -1484,7 +1505,7 @@ static const char *const l_el[T_FIN] = {
 	[T_H_AYUDA] = "Αυτή η λίστα συντομεύσεων",
 	[T_DESC] = "Επεξεργαστής κειμένου για το τερματικό", [T_LICENCIA] = "Άδεια GNU GPL έκδοση 3 ή νεότερη.",
 	[T_CIFRADO] = "Κρυπτογράφηση: XChaCha20-Poly1305 και Argon2id", [T_MONO] = "(Monocypher, από τον Loup Vaillant και άλλους)",
-	[T_USO] = "Χρήση: isi [-r] [αρχείο]\n\n  -r   άνοιγμα μόνο για ανάγνωση\n  -h   εμφάνιση αυτής της βοήθειας\n"
+	[T_USO] = "Χρήση: isi [-r] [+N] [αρχείο]\n\n  -r   άνοιγμα μόνο για ανάγνωση\n  +N   έναρξη στη γραμμή N (ή αρχείο:N)\n  -h   εμφάνιση αυτής της βοήθειας\n"
 		"  -v   εμφάνιση της έκδοσης\n\nΣτον επεξεργαστή, το Ctrl+H δείχνει τις συντομεύσεις και το F10 ανοίγει τα μενού.\n",
 	[T_OPCION] = "άγνωστη επιλογή: %s", [T_UNO] = "μπορεί να ανοίξει μόνο ένα αρχείο τη φορά",
 	[T_TERMINAL] = "χρειάζεται τερματικό", [T_CANCELADO] = "ακυρώθηκε", [T_SINMEM] = "δεν υπάρχει αρκετή μνήμη",
@@ -1506,6 +1527,7 @@ static const char *const l_el[T_FIN] = {
 	[T_PIE_COMO] = "Tab: λίστα ή όνομα · Enter: αποδοχή · ⌫: πάνω · Esc: άκυρο",
 	[T_PIE_ABRIR] = "Enter: άνοιγμα · ⌫: γονικός φάκελος · Esc: άκυρο",
 	[T_EXISTE] = "Το «%s» υπάρχει ήδη. Αντικατάσταση;", [T_NOENTRA] = "Αδύνατη η είσοδος στο %s",
+	[T_TOCADO] = "Το «%s» άλλαξε στον δίσκο. Αποθήκευση παρ’ όλα αυτά;",
 	[T_T_ABRIR] = "Άνοιγμα", [T_T_COMO] = "Αποθήκευση ως", [T_T_CSV] = "Μετατροπή CSV σε πίνακα",
 	[T_SI] = "Ναι", [T_NO] = "Όχι", [T_CANCELAR] = "Άκυρο", [T_TODAS] = "Όλα",
 	[T_CAMBIOS] = "Υπάρχουν μη αποθηκευμένες αλλαγές. Αποθήκευση;", [T_NUEVAPASS] = "Νέος κωδικός",
@@ -1558,7 +1580,7 @@ static const char *const l_he[T_FIN] = {
 	[T_H_DOBLE] = "סגירת שורת ההודעות", [T_H_TERMINAL] = "בחירה כמו במסוף", [T_H_AYUDA] = "רשימת הקיצורים הזו",
 	[T_DESC] = "עורך טקסט למסוף", [T_LICENCIA] = "רישיון GNU GPL גרסה 3 ומעלה.",
 	[T_CIFRADO] = "הצפנה: XChaCha20-Poly1305 ו-Argon2id", [T_MONO] = "(Monocypher, מאת Loup Vaillant ואחרים)",
-	[T_USO] = "שימוש: isi [-r] [קובץ]\n\n  -r   פתיחה לקריאה בלבד\n  -h   הצגת עזרה זו\n  -v   הצגת הגרסה\n\n"
+	[T_USO] = "שימוש: isi [-r] [+N] [קובץ]\n\n  -r   פתיחה לקריאה בלבד\n  +N   התחלה בשורה N (או קובץ:N)\n  -h   הצגת עזרה זו\n  -v   הצגת הגרסה\n\n"
 		"בתוך העורך, Ctrl+H מציג את הקיצורים ו-F10 פותח את התפריטים.\n",
 	[T_OPCION] = "אפשרות לא מוכרת: %s", [T_UNO] = "אפשר לפתוח רק קובץ אחד בכל פעם", [T_TERMINAL] = "נדרש מסוף",
 	[T_CANCELADO] = "בוטל", [T_SINMEM] = "אין מספיק זיכרון", [T_CONFTERM] = "לא ניתן להגדיר את המסוף",
@@ -1576,6 +1598,7 @@ static const char *const l_he[T_FIN] = {
 	[T_PIE_COMO] = "Tab: רשימה או שם · Enter: אישור · ⌫: למעלה · Esc: ביטול",
 	[T_PIE_ABRIR] = "Enter: פתיחה · ⌫: תיקיית האב · Esc: ביטול",
 	[T_EXISTE] = "הקובץ “%s” כבר קיים. להחליף?", [T_NOENTRA] = "לא ניתן להיכנס אל %s",
+	[T_TOCADO] = "הקובץ “%s” השתנה בדיסק. לשמור בכל זאת?",
 	[T_T_ABRIR] = "פתיחה", [T_T_COMO] = "שמירה בשם", [T_T_CSV] = "המרת CSV לטבלה",
 	[T_SI] = "כן", [T_NO] = "לא", [T_CANCELAR] = "ביטול", [T_TODAS] = "הכול",
 	[T_CAMBIOS] = "יש שינויים שלא נשמרו. לשמור אותם?", [T_NUEVAPASS] = "סיסמה חדשה", [T_REPITE] = "הקלידו שוב את הסיסמה",
@@ -1626,7 +1649,7 @@ static const char *const l_hr[T_FIN] = {
 	[T_H_DOBLE] = "Zatvori traku s porukama", [T_H_TERMINAL] = "Odabir kao u terminalu", [T_H_AYUDA] = "Ovaj popis prečaca",
 	[T_DESC] = "Uređivač teksta za terminal", [T_LICENCIA] = "Licenca GNU GPL verzija 3 ili novija.",
 	[T_CIFRADO] = "Šifriranje: XChaCha20-Poly1305 i Argon2id", [T_MONO] = "(Monocypher, autor Loup Vaillant i drugi)",
-	[T_USO] = "Uporaba: isi [-r] [datoteka]\n\n  -r   otvori samo za čitanje\n  -h   prikaži ovu pomoć\n"
+	[T_USO] = "Uporaba: isi [-r] [+N] [datoteka]\n\n  -r   otvori samo za čitanje\n  +N   počni od retka N (ili datoteka:N)\n  -h   prikaži ovu pomoć\n"
 		"  -v   prikaži verziju\n\nU uređivaču Ctrl+H prikazuje prečace, a F10 otvara izbornike.\n",
 	[T_OPCION] = "nepoznata opcija: %s", [T_UNO] = "odjednom se može otvoriti samo jedna datoteka",
 	[T_TERMINAL] = "potreban je terminal", [T_CANCELADO] = "otkazano", [T_SINMEM] = "nema dovoljno memorije",
@@ -1646,6 +1669,7 @@ static const char *const l_hr[T_FIN] = {
 	[T_PIE_COMO] = "Tab: popis ili naziv · Enter: prihvati · ⌫: gore · Esc: odustani",
 	[T_PIE_ABRIR] = "Enter: otvori · ⌫: nadređena mapa · Esc: odustani",
 	[T_EXISTE] = "„%s” već postoji. Zamijeniti?", [T_NOENTRA] = "Nije moguće ući u %s",
+	[T_TOCADO] = "„%s” se promijenio na disku. Ipak spremiti?",
 	[T_T_ABRIR] = "Otvori", [T_T_COMO] = "Spremi kao", [T_T_CSV] = "Pretvori CSV u tablicu",
 	[T_SI] = "Da", [T_NO] = "Ne", [T_CANCELAR] = "Odustani", [T_TODAS] = "Sve",
 	[T_CAMBIOS] = "Ima nespremljenih promjena. Spremiti ih?", [T_NUEVAPASS] = "Nova lozinka", [T_REPITE] = "Ponovite lozinku",

@@ -60,6 +60,27 @@ static void siembra(const char *s, size_t n)
 	}
 }
 
+static void busquedas(char *b, size_t n)
+{
+	char *c = malloc(n + 1);
+	size_t l = azr() % 40;
+	int i;
+
+	memcpy(c, b, n + 1);
+	cargatexto(c, n);
+	free(c);
+	if (l > n)
+		l = n;
+	qb[0] = '/';
+	memcpy(qb + 1, b + (n ? azr() % (n - l + 1) : 0), l);
+	qb[l + 1] = azr() & 1 ? '*' : '(';
+	qb[l + 2] = '/';
+	qb[l + 3] = 0;
+	cy = cx = sel = 0;
+	for (i = 0; i < 6; i++)
+		busca(i & 1 ? -1 : 1, 1);
+}
+
 static void tablas(char *b, size_t n)
 {
 	Tabla t;
@@ -112,7 +133,7 @@ int main(int argc, char **argv)
 		memcpy(b, sem[j], n);
 		n = muta(b, n, sizeof b - 1);
 		b[n] = 0;
-		switch (i % 6) {
+		switch (i % 7) {
 		case 0:
 			memset(&t, 0, sizeof t);
 			t.e = azr() % 3;
@@ -141,6 +162,9 @@ int main(int argc, char **argv)
 			b[h] = q;
 			cumple(&fl, b + h);
 			suelta_f(&fl);
+			break;
+		case 6:
+			busquedas(b, n);
 			break;
 		default:
 			tablas(b, n);

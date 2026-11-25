@@ -1,9 +1,10 @@
-.TH ISI 1 "noviembre de 2026" "isi 1.0.2" "Manual de isi"
+.TH ISI 1 "noviembre de 2026" "isi 1.0.3" "Manual de isi"
 .SH NOMBRE
 isi \- editor de texto para la terminal
 .SH SINOPSIS
 .B isi
 .RB [ \-r ]
+.RB [ + \fIN\fP ]
 .RI [ fichero ]
 .SH DESCRIPCIÓN
 .B isi
@@ -18,10 +19,21 @@ y la inicial del menú, y se recorren con el tabulador o las flechas.
 Si el fichero no existe, se crea al guardar. Si está cifrado con
 .BR isi ,
 se pide la contraseña al abrirlo.
+.PP
+Si el fichero ha cambiado en el disco desde que se abrió o se guardó,
+.B isi
+pregunta antes de sobrescribirlo.
 .SH OPCIONES
 .TP
 .B \-r
 Abre el fichero en modo solo lectura.
+.TP
+.BI + N
+Empieza en la línea
+.IR N .
+.IB fichero : N
+hace lo mismo, así que se puede pegar tal cual la salida de
+.BR "grep \-n" .
 .TP
 .B \-h
 Muestra la ayuda y termina.
@@ -59,7 +71,12 @@ Eliminar las líneas vacías de la selección o, si no hay selección, de
 todo el texto.
 .TP
 .B Ctrl+F, F3, Mayús+F3
-Buscar, siguiente y anterior. No distingue mayúsculas de minúsculas.
+Buscar, siguiente y anterior. No distingue mayúsculas de minúsculas. Lo
+que va entre barras y lleva algún carácter de expresión regular, como
+.BR /[0\-9a\-f]{64}/ ,
+se busca como expresión regular POSIX extendida. Una ruta como
+.B /tmp/
+se busca como texto normal.
 .TP
 .B Ctrl+R
 Buscar y reemplazar.
