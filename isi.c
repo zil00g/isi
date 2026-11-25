@@ -1670,7 +1670,7 @@ static int elegir(const char *q, const char *ops)
 		pinta();
 		x = 2 + texto(filas - 2, 2, q, TIT, cols - 4) + 2;
 		for (i = 0; i < n; i++) {
-			snprintf(b, sizeof b, "[ %s ]", op[i]);
+			snprintf(b, sizeof b, "[ %.63s ]", op[i]);
 			xo[i] = x;
 			x += texto(filas - 2, x, b, i == f ? INV : NOR, cols - 2 - x) + 2;
 		}

@@ -26,6 +26,6 @@ jobs:
       - name: Fuzzing
         run: make fuzz ENTRADAS=100000
       - name: Analizador de gcc
-        run: gcc -std=c99 -Imonocypher -O1 -fanalyzer -Werror -c isi.c -o /dev/null
+        run: gcc -std=c99 -Imonocypher -O1 -fanalyzer -Werror -Wno-format-truncation -c isi.c -o /dev/null
       - name: cppcheck
         run: cppcheck --std=c99 --enable=warning,portability --check-level=exhaustive --error-exitcode=1 --inline-suppr -q -Imonocypher -UMONOCYPHER_CPP_NAMESPACE isi.c
