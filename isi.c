@@ -31,7 +31,7 @@
 #include "monocypher.h"
 #include "idiomas.h"
 
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define TABU 4
 #define MAXC 256
 #define GRANDE 400
@@ -1517,7 +1517,7 @@ static int guarda(const char *p)
 	for (i = 0; i < nl; i++) {
 		add(&o, L[i].s, L[i].n);
 		if (i < nl - 1)
-			add(&o, "\r\n" + !crlf, 1 + crlf);
+			add(&o, &"\r\n"[!crlf], 1 + crlf);
 	}
 	n = o.n;
 	if (cif) {
@@ -4817,8 +4817,10 @@ static void teclahoja(int k)
 	case K_SUP: editacelda("", 0, 1); return;
 	case K_PEGAR: pegahoja(pg.s ? pg.s : "", pg.n); return;
 	default:
-		if (k >= 32 && k < K_ESC && k != 127)
-			editacelda(s, cod(k, s), 0);
+		if (k >= 32 && k < K_ESC && k != 127) {
+			n = cod(k, s);
+			editacelda(s, n, 0);
+		}
 		return;
 	}
 	n = largo();
@@ -5104,8 +5106,10 @@ static void compila(Filtro *f, const char *e)
 			c.op = strpbrk(a, "*?") ? F_GLOB : F_CONT;
 			c.p = strdup(hf1.s);
 		}
-		if (!*a)
+		if (!*a) {
+			free(c.p);
 			continue;
+		}
 		f->c = re(f->c, (f->nc + 1) * sizeof *f->c);
 		f->c[f->nc++] = c;
 	}
@@ -6020,7 +6024,8 @@ static void edita(int k)
 		borrasel();
 		if (strchr(" ,;)]}\"'<>!?", k))
 			autodesactiva();
-		ins(cy, cx, s, cod(k, s));
+		i = cod(k, s);
+		ins(cy, cx, s, i);
 	}
 	if (t && filat(cy))
 		tfix();

@@ -93,6 +93,18 @@ static int abre_cifrado(const char *p, const char *pw, char **b, size_t *n)
 	return 1;
 }
 
+static int vector(void)
+{
+	static const uint8_t s[16] = { 0x51, 0x83, 0xef, 0x56, 0xf4, 0xa7, 0x83, 0x0f,
+		0x4c, 0x55, 0xc6, 0xd4, 0x38, 0xe7, 0xb2, 0xd9 };
+	static const uint8_t e[32] = { 0xd3, 0x2e, 0xab, 0x28, 0xea, 0xe2, 0xe6, 0x8b,
+		0xa3, 0x7f, 0x3d, 0xb1, 0xdd, 0x20, 0xa2, 0x69, 0x57, 0x81, 0xf3, 0x36, 0xc1, 0x2c,
+		0x41, 0xe1, 0xd6, 0x35, 0x9a, 0x95, 0x88, 0x49, 0xee, 0xa6 };
+	uint8_t k[32];
+
+	return deriva(CLAVE, s, k) && !memcmp(k, e, 32);
+}
+
 static void pruebas_cifrado(void)
 {
 	static const char t[] = "línea uno\nñandú 東京\n\nfin";
@@ -107,6 +119,7 @@ static void pruebas_cifrado(void)
 		free(b);
 	}
 	ok(!abre_cifrado(p, "Otra-clave-mala-123", &b, &n), "contraseña incorrecta");
+	ok(vector(), "Argon2id da la misma clave que libsodium");
 
 	snprintf(q, sizeof q, "%.200s/isi-prueba-XXXXXX", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
 	if (!mkdtemp(q)) {
@@ -263,6 +276,43 @@ static void pruebas_hoja(void)
 	filtro("canción", "CANCION", 1);
 }
 
+static void formatos(const char *s, char *o, size_t n)
+{
+	size_t j = 0;
+
+	for (; *s && j + 2 < n; s++)
+		if (*s == '%') {
+			s++;
+			while (*s && strchr("-+ #0123456789.*lhzjt", *s))
+				o[j++] = *s++;
+			if (!*s)
+				break;
+			o[j++] = *s;
+			o[j++] = ' ';
+		}
+	o[j] = 0;
+}
+
+static void pruebas_idiomas(void)
+{
+	int n = sizeof idiomas / sizeof *idiomas, i, k, bien = 1, guarda = idi;
+	char a[64], b[64];
+
+	for (i = 0; i < n; i++) {
+		idi = i;
+		for (k = 1; k < T_FIN; k++) {
+			formatos(l_es[k], a, sizeof a);
+			formatos(tx(k), b, sizeof b);
+			if (strcmp(a, b)) {
+				bien = 0;
+				printf("  %s %d: «%s» frente a «%s»\n", idiomas[i].cod, k, b, a);
+			}
+		}
+	}
+	idi = guarda;
+	ok(bien, "las traducciones usan los mismos %s y %d que el español");
+}
+
 int main(int argc, char **argv)
 {
 	if (argc > 1)
@@ -271,6 +321,7 @@ int main(int argc, char **argv)
 	pruebas_cifrado();
 	pruebas_csv();
 	pruebas_hoja();
+	pruebas_idiomas();
 	printf("%d pruebas, %d fallos\n", hechas, falladas);
 	return falladas != 0;
 }

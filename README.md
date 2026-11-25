@@ -32,18 +32,18 @@ Descarga el `.deb` de tu equipo desde la página de
 
 | Paquete | Para |
 |---|---|
-| `isi_1.0.1_amd64.deb` | PC y portátiles de 64 bits |
-| `isi_1.0.1_i386.deb` | PC antiguos de 32 bits |
-| `isi_1.0.1_arm64.deb` | Raspberry Pi 3, 4 y 5 con sistema de 64 bits |
-| `isi_1.0.1_armhf.deb` | Raspberry Pi con Raspberry Pi OS de 32 bits |
+| `isi_1.0.2_amd64.deb` | PC y portátiles de 64 bits |
+| `isi_1.0.2_i386.deb` | PC antiguos de 32 bits |
+| `isi_1.0.2_arm64.deb` | Raspberry Pi 3, 4 y 5 con sistema de 64 bits |
+| `isi_1.0.2_armhf.deb` | Raspberry Pi con Raspberry Pi OS de 32 bits |
 
 y, en la carpeta donde lo hayas descargado:
 
 ```sh
-sudo apt install ./isi_1.0.1_amd64.deb
+sudo apt install ./isi_1.0.2_amd64.deb
 ```
 
-También vale `sudo dpkg -i isi_1.0.1_amd64.deb`.
+También vale `sudo dpkg -i isi_1.0.2_amd64.deb`.
 
 En la página de cada versión están las sumas SHA-256 de todos los
 ficheros. Para comprobar que el que has bajado está bien, descarga
@@ -123,9 +123,15 @@ copiaste dentro de isi.
 Al copiar con Ctrl+C, isi manda el texto a la terminal (OSC 52), así que
 en kitty, foot, WezTerm, Alacritty, xterm, tmux y por SSH llega al
 portapapeles del sistema sin instalar nada. Si además tienes `wl-copy`,
-`xclip` o `xsel`, también los usa. Y si tu terminal no admite OSC 52 y
-no tienes ninguno de esos, seleccionar con el ratón y Ctrl+Mayús+C
-funciona siempre.
+`xclip` o `xsel`, también los usa.
+
+Algunas terminales, como GNOME Terminal, no admiten OSC 52. En ellas
+hace falta `wl-clipboard` (o `xclip` en X11) para pegar fuera de isi lo
+que copias con Ctrl+C:
+
+```sh
+sudo apt install wl-clipboard
+```
 
 ## Tablas
 
@@ -283,6 +289,10 @@ Formato del fichero, por si quieres descifrarlo con otra herramienta:
 La clave sale de Argon2id con 64 MiB de memoria, 3 pasadas y un solo
 hilo. Los 44 primeros bytes van como datos asociados, así que si alguien
 toca la cabecera el fichero no se abre. Cada guardado usa un nonce nuevo.
+
+En [FORMATO.md](FORMATO.md) está con más detalle y con un script de
+Python para abrirlo sin isi. Lo que protege y lo que no, y cómo avisarme
+de un fallo de seguridad, en [SECURITY.md](SECURITY.md).
 
 ## Licencia
 

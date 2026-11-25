@@ -35,18 +35,18 @@ Download the `.deb` for your machine from the
 
 | Package | For |
 |---|---|
-| `isi_1.0.1_amd64.deb` | 64-bit PCs and laptops |
-| `isi_1.0.1_i386.deb` | Old 32-bit PCs |
-| `isi_1.0.1_arm64.deb` | Raspberry Pi 3, 4 and 5 with a 64-bit system |
-| `isi_1.0.1_armhf.deb` | Raspberry Pi with 32-bit Raspberry Pi OS |
+| `isi_1.0.2_amd64.deb` | 64-bit PCs and laptops |
+| `isi_1.0.2_i386.deb` | Old 32-bit PCs |
+| `isi_1.0.2_arm64.deb` | Raspberry Pi 3, 4 and 5 with a 64-bit system |
+| `isi_1.0.2_armhf.deb` | Raspberry Pi with 32-bit Raspberry Pi OS |
 
 and, in the folder where you downloaded it:
 
 ```sh
-sudo apt install ./isi_1.0.1_amd64.deb
+sudo apt install ./isi_1.0.2_amd64.deb
 ```
 
-`sudo dpkg -i isi_1.0.1_amd64.deb` works too.
+`sudo dpkg -i isi_1.0.2_amd64.deb` works too.
 
 Each release page lists the SHA-256 sums of every file. To check that
 the one you downloaded is intact, also download `SHA256SUMS` and, in the
@@ -128,9 +128,15 @@ last thing you copied inside isi.
 When you copy with Ctrl+C, isi sends the text to the terminal (OSC 52),
 so in kitty, foot, WezTerm, Alacritty, xterm, tmux and over SSH it
 reaches the system clipboard without installing anything. If you also
-have `wl-copy`, `xclip` or `xsel`, it uses them too. And if your
-terminal does not support OSC 52 and you have none of those, selecting
-with the mouse and Ctrl+Shift+C always works.
+have `wl-copy`, `xclip` or `xsel`, it uses them too.
+
+Some terminals, such as GNOME Terminal, do not support OSC 52. There you
+need `wl-clipboard` (or `xclip` on X11) to paste outside isi what you
+copy with Ctrl+C:
+
+```sh
+sudo apt install wl-clipboard
+```
 
 ## Tables
 
@@ -287,6 +293,10 @@ The key comes from Argon2id with 64 MiB of memory, 3 passes and a single
 lane. The first 44 bytes are used as associated data, so if someone
 tampers with the header the file does not open. Every save uses a new
 nonce.
+
+[FORMAT.md](FORMAT.md) has more detail and a Python script to open
+the file without isi. What it protects and what it doesn't, and how to
+report a security bug, are in [SECURITY.md](SECURITY.md).
 
 ## License
 

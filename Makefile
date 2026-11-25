@@ -1,4 +1,4 @@
-VERSION = 1.0.1
+VERSION = 1.0.2
 PREFIX ?= /usr/local
 CC ?= cc
 CFLAGS ?= -Os -Wall -Wextra
@@ -36,6 +36,20 @@ pruebas/pruebas: pruebas/pruebas.c isi.c idiomas.h $(MONO)
 check: pruebas/pruebas
 	./pruebas/pruebas pruebas
 
+SANITIZA = -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
+
+sanitiza:
+	rm -f pruebas/pruebas
+	$(MAKE) check CFLAGS="$(SANITIZA) -Wall -Wextra" LDFLAGS="$(SANITIZA)"
+	rm -f pruebas/pruebas
+
+ENTRADAS ?= 100000
+
+fuzz: pruebas/fuzz.c isi.c idiomas.h $(MONO)
+	$(CC) -std=c99 $(MONO_C) $(CPPFLAGS) $(SANITIZA) -o pruebas/fuzz pruebas/fuzz.c $(filter %.c,$(MONO)) $(MONO_L)
+	./pruebas/fuzz $(ENTRADAS) 1
+	./pruebas/fuzz $(ENTRADAS) 2
+
 install: isi
 	install -Dm755 isi $(DESTDIR)$(PREFIX)/bin/isi
 	install -Dm644 isi.1 $(DESTDIR)$(PREFIX)/share/man/man1/isi.1
@@ -46,6 +60,6 @@ uninstall:
 		$(DESTDIR)$(PREFIX)/share/man/es/man1/isi.1
 
 clean:
-	rm -rf isi pruebas/pruebas dist
+	rm -rf isi pruebas/pruebas pruebas/fuzz dist
 
-.PHONY: all estatico deb check install uninstall clean
+.PHONY: all estatico deb check sanitiza fuzz install uninstall clean

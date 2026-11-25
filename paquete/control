@@ -5,7 +5,7 @@ Maintainer: zil00g <zil00g@protonmail.com>
 Installed-Size: @TAM@
 Section: editors
 Priority: optional
-Suggests: wl-clipboard | xclip | xsel
+Recommends: wl-clipboard | xclip | xsel
 Homepage: https://github.com/zil00g/isi
 Description: editor de texto para la terminal, ligero y en 23 idiomas
  isi es un editor de texto para la terminal con menús desplegables

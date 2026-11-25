@@ -1,0 +1,31 @@
+name: revisar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Herramientas
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq cppcheck clang > /dev/null
+      - name: Pruebas con gcc
+        run: make clean check CFLAGS="-Os -Wall -Wextra -Werror"
+      - name: Pruebas con clang
+        run: make clean check CC=clang CFLAGS="-Os -Wall -Wextra -Werror"
+      - name: Pruebas con ASan y UBSan
+        run: make clean sanitiza
+      - name: Fuzzing
+        run: make fuzz ENTRADAS=100000
+      - name: Analizador de gcc
+        run: gcc -std=c99 -Imonocypher -O1 -fanalyzer -Werror -c isi.c -o /dev/null
+      - name: cppcheck
+        run: cppcheck --std=c99 --enable=warning,portability --check-level=exhaustive --error-exitcode=1 --inline-suppr -q -Imonocypher -UMONOCYPHER_CPP_NAMESPACE isi.c
