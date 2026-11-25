@@ -1,6 +1,6 @@
 # Cambios
 
-## 1.0.2 (sin publicar)
+## 1.0.2 (25-11-2026)
 
 - CSV: «256.1.1.1», «1.2.3», «.5» o «5.» ya no cuentan como números al
   ordenar y filtrar. Solo lo que está bien escrito, con los grupos de
