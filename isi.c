@@ -32,7 +32,7 @@
 #include "monocypher.h"
 #include "idiomas.h"
 
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 #define TABU 4
 #define MAXC 256
 #define GRANDE 400
@@ -77,6 +77,7 @@ static size_t peso;
 static char ruta[PATH_MAX], aviso[512], qb[256], rp[256], titulo[PATH_MAX + 16];
 static time_t avt;
 static uint8_t clave[32], sal[16];
+static char resp[PATH_MAX];
 static struct termios orig;
 static volatile sig_atomic_t cambio, colgado;
 static unsigned char eb[8192];
@@ -1469,6 +1470,84 @@ static int todo(int fd, const char *d, size_t n)
 	return 0;
 }
 
+static int respaldo(const char *real, char *b, int n)
+{
+	const char *x = getenv("XDG_CACHE_HOME"), *h = getenv("HOME");
+	char t[16384];
+	ssize_t r;
+	int i, o, e = 0;
+
+	if (x && x[0] == '/')
+		snprintf(b, n, "%s", x);
+	else if (h && h[0] == '/')
+		snprintf(b, n, "%s/.cache", h);
+	else
+		return 0;
+	mkdir(b, 0700);
+	strncat(b, "/isi", n - strlen(b) - 1);
+	mkdir(b, 0700);
+	snprintf(b + strlen(b), n - strlen(b), "/%s.XXXXXX", base(real));
+	if ((i = open(real, O_RDONLY | O_CLOEXEC)) < 0)
+		return 0;
+	if ((o = mkstemp(b)) < 0) {
+		close(i);
+		return 0;
+	}
+	while ((r = read(i, t, sizeof t)) > 0 || (r < 0 && errno == EINTR))
+		if (r > 0 && todo(o, t, r)) {
+			e = 1;
+			break;
+		}
+	close(i);
+	if (e || r < 0 || fsync(o) || close(o)) {
+		unlink(b);
+		return 0;
+	}
+	return 1;
+}
+
+static int encima(const char *real, const char *d, size_t n)
+{
+	char b[PATH_MAX];
+	int fd, e, r = respaldo(real, b, sizeof b);
+
+	if ((fd = open(real, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, cif ? 0600 : 0666)) < 0) {
+		e = errno;
+		if (r)
+			unlink(b);
+		return e;
+	}
+	if (todo(fd, d, n) || fsync(fd)) {
+		e = errno;
+		close(fd);
+		if (r)
+			snprintf(resp, sizeof resp, "%s", b);
+		return e;
+	}
+	if (close(fd)) {
+		e = errno;
+		if (r)
+			snprintf(resp, sizeof resp, "%s", b);
+		return e;
+	}
+	if (r)
+		unlink(b);
+	return 0;
+}
+
+static void asienta(const char *real)
+{
+	char d[PATH_MAX];
+	const char *b = strrchr(real, '/');
+	int fd;
+
+	snprintf(d, sizeof d, "%.*s", b ? (b == real ? 1 : (int)(b - real)) : 1, b ? real : ".");
+	if ((fd = open(d, O_RDONLY | O_DIRECTORY | O_CLOEXEC)) >= 0) {
+		if (fsync(fd)) {}
+		close(fd);
+	}
+}
+
 static int escribe(const char *p, const char *d, size_t n)
 {
 	char real[PATH_MAX], tmp[PATH_MAX + 16];
@@ -1477,6 +1556,7 @@ static int escribe(const char *p, const char *d, size_t n)
 	int fd, ex, e;
 	mode_t um;
 
+	resp[0] = 0;
 	if (!realpath(p, real))
 		snprintf(real, sizeof real, "%s", p);
 	ex = !stat(real, &st);
@@ -1486,16 +1566,8 @@ static int escribe(const char *p, const char *d, size_t n)
 	snprintf(tmp, sizeof tmp, "%.*s.isi-XXXXXX", b ? (int)(b - real + 1) : 0, real);
 	um = umask(0);
 	umask(um);
-	if ((fd = mkstemp(tmp)) < 0) {
-		if ((fd = open(real, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, cif ? 0600 : 0666)) < 0)
-			return errno;
-		if (todo(fd, d, n) || fsync(fd)) {
-			e = errno;
-			close(fd);
-			return e;
-		}
-		return close(fd) ? errno : 0;
-	}
+	if ((fd = mkstemp(tmp)) < 0)
+		return encima(real, d, n);
 	if (fchmod(fd, ex ? st.st_mode & 07777 : (cif ? 0600 : 0666) & ~um)) {}
 	if (ex && fchown(fd, st.st_uid, st.st_gid)) {}
 	if (todo(fd, d, n) || fsync(fd)) {
@@ -1509,6 +1581,7 @@ static int escribe(const char *p, const char *d, size_t n)
 		unlink(tmp);
 		return e;
 	}
+	asienta(real);
 	return 0;
 }
 
@@ -1573,7 +1646,10 @@ static int guarda(const char *p)
 	free(o.s);
 	free(c);
 	if (e) {
-		avisa(tx(T_NOGUARDA), base(p), fallo(e));
+		if (resp[0])
+			avisa(tx(T_RESPALDO), base(p), fallo(e), resp);
+		else
+			avisa(tx(T_NOGUARDA), base(p), fallo(e));
 		return 0;
 	}
 	if (p != ruta)
@@ -2159,11 +2235,44 @@ static void rescata(void)
 	_exit(1);
 }
 
+static int resal(const char *pw)
+{
+	uint8_t s[16], k[32];
+	int r = deriva(pw, sal, k) && !crypto_verify32(k, clave) && azar(s, 16) && deriva(pw, s, k);
+
+	if (r) {
+		memcpy(sal, s, 16);
+		memcpy(clave, k, 32);
+	}
+	crypto_wipe(k, 32);
+	crypto_wipe(s, 16);
+	return r;
+}
+
 static int guarda_como(void)
 {
-	char p[PATH_MAX];
+	char p[PATH_MAX], pw[256];
+	int e;
 
-	return explora(1, T_T_COMO, p) && guarda(p);
+	if (!explora(1, T_T_COMO, p))
+		return 0;
+	if (!cif || (ruta[0] && !strcmp(p, ruta)))
+		return guarda(p);
+	for (e = 0;; e = 1) {
+		pw[0] = 0;
+		if (!pedir(tx(e ? T_PASSMAL : T_PASS), pw, sizeof pw, 1)) {
+			crypto_wipe(pw, sizeof pw);
+			return 0;
+		}
+		avisa("%s", tx(T_CALCULANDO));
+		pinta();
+		vuelca(-1, -1);
+		if (resal(pw))
+			break;
+	}
+	crypto_wipe(pw, sizeof pw);
+	aviso[0] = 0;
+	return guarda(p);
 }
 
 static int guardar(void)

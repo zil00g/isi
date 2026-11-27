@@ -35,18 +35,18 @@ Download the `.deb` for your machine from the
 
 | Package | For |
 |---|---|
-| `isi_1.0.3_amd64.deb` | 64-bit PCs and laptops |
-| `isi_1.0.3_i386.deb` | Old 32-bit PCs |
-| `isi_1.0.3_arm64.deb` | Raspberry Pi 3, 4 and 5 with a 64-bit system |
-| `isi_1.0.3_armhf.deb` | Raspberry Pi with 32-bit Raspberry Pi OS |
+| `isi_1.0.4_amd64.deb` | 64-bit PCs and laptops |
+| `isi_1.0.4_i386.deb` | Old 32-bit PCs |
+| `isi_1.0.4_arm64.deb` | Raspberry Pi 3, 4 and 5 with a 64-bit system |
+| `isi_1.0.4_armhf.deb` | Raspberry Pi with 32-bit Raspberry Pi OS |
 
 and, in the folder where you downloaded it:
 
 ```sh
-sudo apt install ./isi_1.0.3_amd64.deb
+sudo apt install ./isi_1.0.4_amd64.deb
 ```
 
-`sudo dpkg -i isi_1.0.3_amd64.deb` works too.
+`sudo dpkg -i isi_1.0.4_amd64.deb` works too.
 
 Each release page lists the SHA-256 sums of every file. To check that
 the one you downloaded is intact, also download `SHA256SUMS` and, in the

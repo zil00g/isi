@@ -159,6 +159,81 @@ static void pruebas_manipulado(const char *p)
 	free(b);
 }
 
+static void pruebas_como(const char *viejo)
+{
+	char q[256], p[300], *b;
+	uint8_t s0[16];
+	size_t n;
+
+	snprintf(q, sizeof q, "%.200s/isi-prueba-XXXXXX", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
+	if (!mkdtemp(q)) {
+		ok(0, "carpeta temporal");
+		return;
+	}
+	snprintf(p, sizeof p, "%s/otra.isi", q);
+	if (!abre_cifrado(viejo, CLAVE, &b, &n)) {
+		ok(0, "abrir el fichero de isi 1.0.0");
+		rmdir(q);
+		return;
+	}
+	cargatexto(b, n);
+	free(b);
+	cif = 1;
+	memcpy(s0, sal, 16);
+	ok(!resal("Otra-clave-mala-123"), "guardar como con otra contraseña no vale");
+	ok(!memcmp(s0, sal, 16), "con la contraseña mala la sal no cambia");
+	ok(resal(CLAVE), "guardar como con la contraseña buena");
+	ok(memcmp(s0, sal, 16), "guardar como lleva sal nueva");
+	ok(guarda(p), "guardar como un cifrado");
+	ok(abre_cifrado(p, CLAVE, &b, &n) && strstr(b, "ñandú, café, 東京"), "lo guardado como se abre con la misma contraseña");
+	free(b);
+	cif = 0;
+	crypto_wipe(clave, 32);
+	unlink(p);
+	rmdir(q);
+}
+
+static void pruebas_encima(void)
+{
+	char q[256], d[300], p[320], c[300], r[320], *b;
+	size_t n;
+	int e;
+
+	snprintf(q, sizeof q, "%.200s/isi-prueba-XXXXXX", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
+	if (!mkdtemp(q)) {
+		ok(0, "carpeta temporal");
+		return;
+	}
+	snprintf(d, sizeof d, "%s/cerrada", q);
+	snprintf(p, sizeof p, "%s/nota.txt", d);
+	snprintf(c, sizeof c, "%s/cache", q);
+	snprintf(r, sizeof r, "%s/isi", c);
+	mkdir(d, 0700);
+	b = strdup("antes");
+	cargatexto(b, 5);
+	free(b);
+	cif = 0;
+	ok(guarda(p), "guardar en una carpeta normal");
+	chmod(d, 0500);
+	setenv("XDG_CACHE_HOME", c, 1);
+	b = strdup("después");
+	cargatexto(b, strlen(b));
+	free(b);
+	if (access(d, W_OK)) {
+		ok(guarda(p), "guardar donde no se puede crear el temporal");
+		b = leetodo(p, &n, &e);
+		ok(b && n == strlen("después") && !memcmp(b, "después", n), "se guarda encima bien");
+		free(b);
+		ok(!rmdir(r), "no queda ninguna copia de antes");
+	}
+	unsetenv("XDG_CACHE_HOME");
+	chmod(d, 0700);
+	unlink(p);
+	rmdir(d);
+	rmdir(c);
+	rmdir(q);
+}
+
 static void pruebas_cifrado(void)
 {
 	static const char t[] = "línea uno\nñandú 東京\n\nfin";
@@ -175,6 +250,7 @@ static void pruebas_cifrado(void)
 	ok(!abre_cifrado(p, "Otra-clave-mala-123", &b, &n), "contraseña incorrecta");
 	ok(vector(), "Argon2id da la misma clave que libsodium");
 	pruebas_manipulado(p);
+	pruebas_como(p);
 
 	snprintf(q, sizeof q, "%.200s/isi-prueba-XXXXXX", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
 	if (!mkdtemp(q)) {
@@ -419,6 +495,7 @@ int main(int argc, char **argv)
 		dir = argv[1];
 	pruebas_ioc();
 	pruebas_cifrado();
+	pruebas_encima();
 	pruebas_csv();
 	pruebas_hoja();
 	pruebas_idiomas();

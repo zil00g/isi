@@ -32,18 +32,18 @@ Descarga el `.deb` de tu equipo desde la página de
 
 | Paquete | Para |
 |---|---|
-| `isi_1.0.3_amd64.deb` | PC y portátiles de 64 bits |
-| `isi_1.0.3_i386.deb` | PC antiguos de 32 bits |
-| `isi_1.0.3_arm64.deb` | Raspberry Pi 3, 4 y 5 con sistema de 64 bits |
-| `isi_1.0.3_armhf.deb` | Raspberry Pi con Raspberry Pi OS de 32 bits |
+| `isi_1.0.4_amd64.deb` | PC y portátiles de 64 bits |
+| `isi_1.0.4_i386.deb` | PC antiguos de 32 bits |
+| `isi_1.0.4_arm64.deb` | Raspberry Pi 3, 4 y 5 con sistema de 64 bits |
+| `isi_1.0.4_armhf.deb` | Raspberry Pi con Raspberry Pi OS de 32 bits |
 
 y, en la carpeta donde lo hayas descargado:
 
 ```sh
-sudo apt install ./isi_1.0.3_amd64.deb
+sudo apt install ./isi_1.0.4_amd64.deb
 ```
 
-También vale `sudo dpkg -i isi_1.0.3_amd64.deb`.
+También vale `sudo dpkg -i isi_1.0.4_amd64.deb`.
 
 En la página de cada versión están las sumas SHA-256 de todos los
 ficheros. Para comprobar que el que has bajado está bien, descarga

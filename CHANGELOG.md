@@ -1,5 +1,22 @@
 # Cambios
 
+## 1.0.4 (27-11-2026)
+
+- Si guardas un fichero cifrado con otro nombre, isi te pide la
+  contraseña y le pone una sal nueva. Antes la copia salía con la misma
+  sal que el original, y quien viera los dos sabía que iban con la misma
+  contraseña.
+- Si isi no puede crear el fichero temporal en la carpeta, por ejemplo
+  porque no tienes permiso para escribir en ella, antes de escribir
+  encima guarda una copia del fichero en `~/.cache/isi`. Si el guardado
+  falla a mitad, te dice dónde está la versión de antes. Si va bien, la
+  copia se borra.
+- Después de guardar, isi se asegura de que la carpeta también queda
+  escrita en el disco. Así un corte de luz justo después de guardar no
+  se lleva el cambio.
+- Más pruebas: guardar como con la contraseña buena y con una mala, y
+  guardar donde no se puede crear el temporal.
+
 ## 1.0.3 (25-11-2026)
 
 - Si alguien cambia el fichero mientras lo tienes abierto, al guardar

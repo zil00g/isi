@@ -27,7 +27,8 @@ yo: isi solo junta las piezas.
 
 ## Cuándo cambia cada cosa
 
-- La sal es nueva cada vez que pones o cambias la contraseña.
+- La sal es nueva cada vez que pones o cambias la contraseña, y también
+  cuando guardas el fichero con otro nombre.
 - El nonce es nuevo cada vez que guardas, sacado de `/dev/urandom`.
   Si no se puede leer, isi no guarda.
 - Los ficheros cifrados nuevos se crean con permisos 0600.

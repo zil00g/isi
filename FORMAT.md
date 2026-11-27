@@ -27,7 +27,8 @@ only puts the pieces together.
 
 ## When each part changes
 
-- The salt is new every time you set or change the password.
+- The salt is new every time you set or change the password, and also
+  when you save the file under another name.
 - The nonce is new on every save, read from `/dev/urandom`. If it can't
   be read, isi doesn't save.
 - New encrypted files are created with mode 0600.
