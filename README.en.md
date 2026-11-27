@@ -20,7 +20,7 @@ The idea comes from daily work in a CSIRT. Reviewing a timeline or writing a rep
 
 Text files and CSV files are easy to handle, with keyboard shortcuts or from the menus, using the mouse or the Tab key.
 
-It is written in C, and over a couple of years it turned into a fast tool meant to save time during the investigation phases of an incident and to handle different files quickly and simply. I kept adding the features I found useful, for example filtering a CSV with hundreds of thousands of rows before opening it in a spreadsheet, so the spreadsheet does not freeze.
+It is written in C, and over a couple of years it turned into a fast tool meant to save time during the investigation phases of an incident and to handle different files quickly and simply. I kept adding the features I found useful, for example filtering a CSV with hundreds of thousands of rows before opening it in a spreadsheet, so the spreadsheet does not freeze. For that time it was a personal project, one of many I have, until in November 2026 I decided to publish it and share it.
 
 ## Contents
 

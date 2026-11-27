@@ -18,7 +18,7 @@ La idea viene del trabajo diario en un CSIRT. Para revisar una timeline o prepar
 
 Los ficheros de texto y los CSV se manejan de forma sencilla, con atajos de teclado o desde los menús, usando el ratón o el tabulador.
 
-Está escrito en C y con un par de años a sus espaldas se fue transformando en una herramienta con buen rendimiento, pensada para ahorrar tiempo en las fases de investigación de un incidente y tratar distintos ficheros de forma ágil y sencilla. Le fui añadiendo las funciones que me eran útiles, por ejemplo filtrar un CSV de cientos de miles de filas antes de abrirlo en una hoja de cálculo, para que no se quede colgada.
+Está escrito en C y con un par de años a sus espaldas se fue transformando en una herramienta con buen rendimiento, pensada para ahorrar tiempo en las fases de investigación de un incidente y tratar distintos ficheros de forma ágil y sencilla. Le fui añadiendo las funciones que me eran útiles, por ejemplo filtrar un CSV de cientos de miles de filas antes de abrirlo en una hoja de cálculo, para que no se quede colgada. Durante ese tiempo fue un proyecto personal, uno de tantos que tengo, hasta que en noviembre de 2026 decidí publicarlo para compartirlo.
 
 ## Índice
 
